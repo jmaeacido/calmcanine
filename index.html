@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="Calm Canine natural pumpkin and peanut butter wellness treats crafted to support calm moments, gentle relief, and everyday balance for dogs of all ages." />
+  <meta name="theme-color" content="#2a3f34" />
   <title>Calm Canine | Calm Starts With Everyday Comfort</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,6 +15,16 @@
 </head>
 <body>
   <div class="cursor-glow"></div>
+
+  <header class="site-header">
+    <a class="brand" href="./"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="#about">About</a>
+      <a href="#guide">Serving Guide</a>
+      <a href="product">Shop</a>
+      <a class="site-nav-cart" href="cart">Cart <span class="cart-count" data-cart-count hidden>0</span></a>
+    </nav>
+  </header>
 
   <main id="top">
     <section class="hero">
@@ -31,7 +44,7 @@
         <h1>Calm starts with<br><em>everyday comfort.</em></h1>
         <p class="hero-text">A natural pumpkin and peanut butter wellness treat crafted to support calm moments, gentle relief, and everyday balance for dogs of all ages.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="https://nativeceuticals.com/product/calm-canine/store/60/">Treat Your Pup</a>
+          <a class="btn btn-primary" href="product">Treat Your Pup</a>
           <a class="btn btn-ghost" href="#about">See What’s Inside</a>
         </div>
         <div class="trust-row desktop-trust">
@@ -98,7 +111,7 @@
           <li><strong>Raw Honey</strong><span>Natural sweetness</span></li>
         </ul>
         <p class="about-trust">Thoughtfully crafted for dogs — simple ingredients, no unnecessary additives.</p>
-        <a class="btn btn-primary about-cta" href="https://nativeceuticals.com/product/calm-canine/store/60/">Get The Product Now</a>
+        <a class="btn btn-primary about-cta" href="product">Get The Product Now</a>
       </div>
     </section>
 
@@ -113,7 +126,7 @@
         <article class="benefit-card reveal"><div class="icon">🐾</div><h3>Happy Movement</h3><p>Helps dogs enjoy everyday activities with confidence and comfort.</p></article>
         <article class="benefit-card reveal"><div class="icon">🌿</div><h3>Everyday Balance</h3><p>Supports a calmer, more balanced daily routine.</p></article>
       </div>
-      <a class="btn btn-primary benefits-cta reveal" href="https://nativeceuticals.com/product/calm-canine/store/60/">Bring Home Their Calm</a>
+      <a class="btn btn-primary benefits-cta reveal" href="product">Bring Home Their Calm</a>
     </section>
 
     <section class="section ecs-section" id="ecs">
@@ -188,7 +201,7 @@
         <article class="serving-card reveal"><div class="dog-size dog-size--large"><img src="assets/large-dog.png" alt="Large dog" width="104" height="68" /></div><p>Over 60 lbs</p><strong>3 to 4 squares</strong><small>30 to 40mg CBD per serving</small></article>
       </div>
       <p class="fine-print reveal">For dogs only. Follow the product label for full directions. Always consult your veterinarian before and/or during use, especially if your dog takes medication or has a health condition. This product has not been evaluated by the FDA and is not intended to diagnose, treat, cure, or prevent any disease.</p>
-      <a class="btn btn-primary guide-cta reveal" href="https://nativeceuticals.com/product/calm-canine/store/60/">Make Calm Part of Their Day</a>
+      <a class="btn btn-primary guide-cta reveal" href="product">Make Calm Part of Their Day</a>
     </section>
 
     <section id="gallery" class="section gallery-section">
@@ -244,7 +257,7 @@
               <div class="gallery-featured-copy">
                 <span class="gallery-tag">Calm Canine routine</span>
                 <p>Gentle relief for aches and anxious moments — a simple square at mealtime, up to twice a day.</p>
-                <a class="gallery-featured-link" href="https://nativeceuticals.com/product/calm-canine/store/60/">Shop the pouch →</a>
+                <a class="gallery-featured-link" href="product">Shop the pouch →</a>
               </div>
             </div>
           </article>
@@ -288,7 +301,7 @@
             <span>Dogs of all ages</span>
           </div>
           <div class="shop-actions">
-            <a class="btn btn-light btn-shop" href="https://nativeceuticals.com/product/calm-canine/store/60/">
+            <a class="btn btn-light btn-shop" href="product">
               <span>Shop Calm Canine</span>
             </a>
             <a class="shop-secondary" href="#guide">View serving guide →</a>
@@ -311,10 +324,11 @@
   </main>
 
   <footer>
-    <a class="brand" href="#top"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <a class="brand" href="./"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
     <p>Relaxation and comfort, one happy bite at a time.</p>
     <p class="legal">This product is not intended to diagnose, treat, cure, or prevent any disease.</p>
   </footer>
+  <script src="cart-store.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

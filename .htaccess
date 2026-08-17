@@ -1,0 +1,13 @@
+RewriteEngine On
+
+RewriteRule ^product/?$ product/index.html [L]
+RewriteRule ^cart/?$ cart/index.html [L]
+RewriteRule ^checkout/?$ checkout/index.html [L]
+RewriteRule ^order/?$ order/index.html [L]
+
+RewriteRule ^api/quote$ api/quote.php [L]
+RewriteRule ^api/orders/create$ api/orders-create.php [L]
+RewriteRule ^api/orders/export$ api/orders-export.php [L]
+RewriteRule ^api/orders/([A-Za-z0-9-]+)$ api/orders-get.php?id=$1 [L]
+
+RewriteRule ^product\.html$ product/ [R=301,L]

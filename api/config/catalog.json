@@ -1,0 +1,21 @@
+{
+  "products": {
+    "calm-canine": {
+      "id": "calm-canine",
+      "name": "Calm Canine",
+      "sku": "617395758661",
+      "image": "assets/calm-canine-pouch-v2.png",
+      "prices": {
+        "onetime": 19.99,
+        "subscribe": 17.99
+      },
+      "taxable": true
+    }
+  },
+  "shipping": {
+    "flatRate": 5.99,
+    "freeShippingMin": 35
+  },
+  "restrictedStates": ["AL", "ID", "KS", "MS", "NE", "ND", "SC", "WY"],
+  "maxQuantity": 10
+}

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Complete your Calm Canine order — secure checkout for calm canine wellness treats." />
+  <meta name="theme-color" content="#2a3f34" />
+  <title>Calm Canine | Checkout</title>
+  <link rel="icon" href="../assets/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="../assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="commerce-page checkout-page">
+  <div class="cursor-glow"></div>
+
+  <header class="site-header">
+    <a class="brand" href="../"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="../#about">About</a>
+      <a href="../product">Shop</a>
+      <a class="site-nav-cart" href="../cart">Cart <span class="cart-count" data-cart-count hidden>0</span></a>
+    </nav>
+  </header>
+
+  <main class="commerce-main">
+    <div class="commerce-head reveal">
+      <p class="eyebrow">CHECKOUT</p>
+      <h1>Complete your order.</h1>
+      <p class="commerce-lead">Enter your details below to place your order.</p>
+    </div>
+
+    <div class="checkout-empty" data-checkout-empty hidden>
+      <p>Your cart is empty.</p>
+      <a class="btn btn-primary" href="../product">Shop Calm Canine</a>
+    </div>
+
+    <form class="commerce-layout checkout-form reveal" data-checkout-form novalidate hidden>
+      <div class="commerce-panel checkout-fields">
+        <section class="checkout-section">
+          <h2>Contact</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Email</span>
+              <input type="email" name="email" autocomplete="email" required />
+            </label>
+            <label class="field">
+              <span>Phone</span>
+              <input type="tel" name="phone" autocomplete="tel" required />
+            </label>
+          </div>
+        </section>
+
+        <section class="checkout-section">
+          <h2>Shipping address</h2>
+          <div class="field-grid">
+            <label class="field field-span-2">
+              <span>Full name</span>
+              <input type="text" name="name" autocomplete="name" required />
+            </label>
+            <label class="field field-span-2">
+              <span>Street address</span>
+              <input type="text" name="address1" autocomplete="address-line1" required />
+            </label>
+            <label class="field field-span-2">
+              <span>Apartment, suite, etc. (optional)</span>
+              <input type="text" name="address2" autocomplete="address-line2" />
+            </label>
+            <label class="field">
+              <span>City</span>
+              <input type="text" name="city" autocomplete="address-level2" required />
+            </label>
+            <label class="field">
+              <span>State</span>
+              <select name="state" autocomplete="address-level1" required data-state-select>
+                <option value="">Select state</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>ZIP code</span>
+              <input type="text" name="zip" inputmode="numeric" autocomplete="postal-code" required pattern="[0-9]{5}(-[0-9]{4})?" />
+            </label>
+          </div>
+          <p class="field-error" data-state-error hidden></p>
+        </section>
+
+        <section class="checkout-section">
+          <h2>Payment</h2>
+          <div class="field-grid">
+            <label class="field field-span-2">
+              <span>Name on card</span>
+              <input type="text" name="cardName" autocomplete="cc-name" required />
+            </label>
+            <label class="field field-span-2">
+              <span>Card number</span>
+              <input type="text" name="cardNumber" inputmode="numeric" autocomplete="cc-number" required placeholder="1234 5678 9012 3456" maxlength="19" data-card-number />
+            </label>
+            <label class="field">
+              <span>Expiry</span>
+              <input type="text" name="cardExpiry" autocomplete="cc-exp" required placeholder="MM / YY" maxlength="7" data-card-expiry />
+            </label>
+            <label class="field">
+              <span>CVC</span>
+              <input type="text" name="cardCvc" inputmode="numeric" autocomplete="cc-csc" required placeholder="123" maxlength="4" data-card-cvc />
+            </label>
+          </div>
+          <p class="checkout-secure">Payment runs in test mode until a processor is connected. Only the card brand and last four digits are sent to our server.</p>
+        </section>
+
+        <label class="checkout-terms field-checkbox">
+          <input type="checkbox" name="acceptTerms" required data-accept-terms />
+          <span>I agree to the terms of sale and confirm I am 21 or older.</span>
+        </label>
+
+        <p class="field-error" data-form-error hidden></p>
+
+        <button type="submit" class="btn btn-primary btn-block checkout-submit" data-place-order>
+          <span class="checkout-submit-label">Place Order</span>
+          <span class="checkout-submit-loading" hidden>Processing…</span>
+        </button>
+      </div>
+
+      <aside class="commerce-summary checkout-summary" aria-labelledby="checkout-summary-heading">
+        <h2 id="checkout-summary-heading">Order summary</h2>
+        <div class="checkout-summary-items" data-checkout-items></div>
+        <dl class="summary-rows">
+          <div><dt>Subtotal</dt><dd data-summary-subtotal>$0.00</dd></div>
+          <div><dt>Shipping</dt><dd data-summary-shipping>$0.00</dd></div>
+          <div data-summary-tax-row hidden><dt>Estimated tax</dt><dd data-summary-tax>—</dd></div>
+          <div class="summary-total"><dt>Total</dt><dd data-summary-total>$0.00</dd></div>
+        </dl>
+        <a class="commerce-back" href="../cart">← Back to cart</a>
+      </aside>
+    </form>
+  </main>
+
+  <footer>
+    <a class="brand" href="../"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <p>Relaxation and comfort, one happy bite at a time.</p>
+    <p class="legal">This product is not intended to diagnose, treat, cure, or prevent any disease.</p>
+  </footer>
+
+  <script src="../cart-store.js"></script>
+  <script src="../api-client.js"></script>
+  <script src="../script.js"></script>
+  <script src="checkout.js"></script>
+</body>
+</html>

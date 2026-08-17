@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Your Calm Canine order is confirmed." />
+  <meta name="theme-color" content="#2a3f34" />
+  <title>Calm Canine | Order Confirmed</title>
+  <link rel="icon" href="../assets/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="../assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="commerce-page order-page">
+  <div class="cursor-glow"></div>
+
+  <header class="site-header">
+    <a class="brand" href="../"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="../#about">About</a>
+      <a href="../product">Shop</a>
+      <a class="site-nav-cart" href="../cart">Cart <span class="cart-count" data-cart-count hidden>0</span></a>
+    </nav>
+  </header>
+
+  <main class="commerce-main">
+    <div class="order-hero reveal" data-order-found hidden>
+      <p class="eyebrow">ORDER CONFIRMED</p>
+      <h1>Thank you — <em>calm is on the way.</em></h1>
+      <p class="commerce-lead" data-order-email-lead>We've received your order.</p>
+      <p class="order-id">Order <span data-order-id></span> · <span data-order-email></span></p>
+    </div>
+
+    <div class="order-loading reveal" data-order-loading>
+      <p class="commerce-lead">Loading your order…</p>
+    </div>
+
+    <div class="order-missing reveal" data-order-missing hidden>
+      <p class="eyebrow">ORDER</p>
+      <h1>We couldn't find that order.</h1>
+      <p class="commerce-lead">The confirmation link may have expired or the order ID is invalid.</p>
+      <a class="btn btn-primary" href="../product">Shop Calm Canine</a>
+    </div>
+
+    <div class="commerce-layout order-layout reveal" data-order-details hidden>
+      <section class="commerce-panel">
+        <h2>Items</h2>
+        <div class="order-lines" data-order-lines></div>
+      </section>
+
+      <aside class="commerce-summary">
+        <h2>Summary</h2>
+        <dl class="summary-rows">
+          <div><dt>Subtotal</dt><dd data-summary-subtotal></dd></div>
+          <div><dt>Shipping</dt><dd data-summary-shipping></dd></div>
+          <div data-summary-tax-row hidden><dt>Tax</dt><dd data-summary-tax></dd></div>
+          <div class="summary-total"><dt>Total</dt><dd data-summary-total></dd></div>
+        </dl>
+        <div class="order-shipping">
+          <h3>Shipping to</h3>
+          <address data-shipping-address></address>
+        </div>
+        <p class="order-payment">Paid with <span data-payment-method></span></p>
+        <a class="btn btn-primary btn-block" href="../product">Continue Shopping</a>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <a class="brand" href="../"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <p>Relaxation and comfort, one happy bite at a time.</p>
+    <p class="legal">This product is not intended to diagnose, treat, cure, or prevent any disease.</p>
+  </footer>
+
+  <script src="../cart-store.js"></script>
+  <script src="../api-client.js"></script>
+  <script src="../script.js"></script>
+  <script src="order.js"></script>
+</body>
+</html>

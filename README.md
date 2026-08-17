@@ -4,7 +4,7 @@ A single-page marketing site for **Calm Canine** — organic pumpkin and peanut 
 
 **Live site:** [calm-canine.vercel.app](https://calm-canine.vercel.app)  
 **Repository:** [github.com/jmaeacido/calm-canine](https://github.com/jmaeacido/calm-canine)  
-**Shop:** [Native Ceuticals — Calm Canine](https://nativeceuticals.com/product/calm-canine/store/60/)
+**Shop:** [product](product) — full on-site cart and checkout at `/cart` and `/checkout`
 
 ## Overview
 
@@ -21,7 +21,7 @@ Calm Canine is a static product landing page built for premium pet-wellness stor
 ### About
 - Split-layout product showcase with ingredient grid
 - Photoshopped product imagery and benefit copy
-- CTAs linked to the live Native Ceuticals product page
+- CTAs linked to the on-site product page (`/product`)
 - Viewport-height section on desktop
 
 ### Benefits
@@ -45,6 +45,18 @@ Calm Canine is a static product landing page built for premium pet-wellness stor
 - Conversion-focused closing section with ambient background, trust chips, and dual CTAs
 - Product visual stage with 3D tilt (desktop), scroll parallax, and treat accent
 
+### Product Page (`/product`)
+- Extensionless URL served from `product/index.html`
+- Image gallery with pouch and treat photography
+- One-time or subscribe & save purchase options with quantity selector
+- Adds to on-site cart via `cart-store.js`
+
+### Cart & Checkout
+- **`/cart`** — review line items, update quantities, order summary
+- **`/checkout`** — contact, shipping, payment, and place order
+- **`/order`** — order confirmation with summary and shipping details
+- Cart persists in `localStorage`; CBD-restricted states blocked at checkout
+
 ### Global
 - Sticky header with mobile nav drawer (Escape / outside-click close)
 - Scroll reveal animations via `IntersectionObserver`
@@ -66,7 +78,21 @@ Calm Canine is a static product landing page built for premium pet-wellness stor
 
 ```
 calm-canine/
-├── index.html              # Main landing page (~330 lines)
+├── index.html              # Main landing page
+├── cart-store.js           # Shared cart, pricing, and order logic
+├── product/
+│   └── index.html          # Shop page (served at /product)
+├── cart/
+│   ├── index.html
+│   └── cart.js
+├── checkout/
+│   ├── index.html
+│   └── checkout.js
+├── order/
+│   ├── index.html
+│   └── order.js
+├── product.js              # Product page interactions
+├── vercel.json             # Clean URLs and redirects
 ├── style.css               # Global styles, sections, responsive breakpoints
 ├── script.js               # Interactions (orbit, carousel, nav, video, parallax)
 ├── assets/
@@ -140,10 +166,10 @@ Works in modern browsers that support CSS custom properties, `IntersectionObserv
 Before publishing or embedding in production:
 
 1. Review all **CBD-related claims**, dosage wording, age restrictions, and veterinary disclaimers for the market where the product will be sold.
-2. Confirm shop URLs point to the correct live product page.
+2. Confirm shop, cart, and checkout URLs resolve correctly in your deployment environment.
 3. Compress large JPG/PNG assets if load time becomes a concern.
 4. Footer and serving-section fine print should be reviewed by legal/compliance as needed.
 
 ---
 
-© 2026 Native Ceuticals
+© 2026 Calm Canine
