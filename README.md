@@ -2,7 +2,7 @@
 
 A marketing site and on-site shop for **Calm Canine** — organic pumpkin and peanut butter wellness treats with CBD isolate, crafted to support calm moments, gentle relief, and everyday balance for dogs of all ages.
 
-**Repository:** [github.com/jmaeacido/calm-canine](https://github.com/jmaeacido/calm-canine)  
+**Repository:** [github.com/jmaeacido/calmcanine](https://github.com/jmaeacido/calmcanine)  
 **Status:** Local development only — no production hosting yet  
 **Shop:** [product](product) — full on-site cart and checkout at `/cart` and `/checkout`
 
@@ -89,7 +89,7 @@ Calm Canine combines a static marketing landing page with a lightweight PHP orde
 ## Project Structure
 
 ```
-calm-canine/
+calmcanine/
 ├── index.html              # Main landing page
 ├── .htaccess               # Clean URLs for pages and API routes
 ├── api-client.js           # fetch wrapper for quote / order endpoints
