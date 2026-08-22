@@ -26,6 +26,7 @@ const taxRow = document.querySelector("[data-summary-tax-row]");
 const taxEl = document.querySelector("[data-summary-tax]");
 
 let quoteRequestId = 0;
+let signedInUser = null;
 
 const fillStates = ()=>{
   if(!stateSelect) return;
@@ -179,6 +180,14 @@ const validateForm = (data)=>{
   if(!data.acceptTerms){
     return "Please accept the terms to place your order.";
   }
+  if(data.createAccount && !signedInUser){
+    if(String(data.accountPassword || "").length < 8){
+      return "Account password must be at least 8 characters.";
+    }
+    if(data.accountPassword !== data.accountPasswordConfirm){
+      return "Account passwords do not match.";
+    }
+  }
   return "";
 };
 
@@ -218,6 +227,7 @@ form?.addEventListener("submit", async e=>{
   const fd = new FormData(form);
   const payload = Object.fromEntries(fd.entries());
   payload.acceptTerms = fd.get("acceptTerms") === "on";
+  payload.createAccount = fd.get("createAccount") === "on";
   payload.state = payload.state || stateSelect?.value;
 
   const validationError = validateForm(payload);
@@ -232,6 +242,18 @@ form?.addEventListener("submit", async e=>{
     return;
   }
 
+  let newsletterOptIn = false;
+  try{
+    newsletterOptIn = await Newsletter.offer({
+      email: trim(payload.email),
+      name: trim(payload.name),
+      source: "checkout",
+      known: Boolean(signedInUser?.newsletter)
+    }) === true;
+  }catch{
+    newsletterOptIn = false;
+  }
+
   submitBtn.disabled = true;
   submitBtn.classList.add("is-loading");
   submitBtn.querySelector(".checkout-submit-label")?.setAttribute("hidden", "");
@@ -240,6 +262,23 @@ form?.addEventListener("submit", async e=>{
   const cardNumber = digitsOnly(payload.cardNumber);
 
   try{
+    if(payload.createAccount && !signedInUser){
+      await ApiClient.accountRegister({
+        email: trim(payload.email),
+        password: payload.accountPassword,
+        name: trim(payload.name),
+        phone: trim(payload.phone),
+        newsletter: newsletterOptIn,
+        shipping: {
+          address1: trim(payload.address1),
+          address2: trim(payload.address2 || ""),
+          city: trim(payload.city),
+          state: trim(payload.state),
+          zip: trim(payload.zip)
+        }
+      });
+    }
+
     const result = await ApiClient.createOrder({
       items: CartStore.getItems(),
       acceptTerms: true,
@@ -270,6 +309,57 @@ form?.addEventListener("submit", async e=>{
     resetSubmitState();
   }
 });
+
+const accountBar = document.querySelector("[data-checkout-account]");
+const guestAccount = document.querySelector("[data-guest-account]");
+const createAccountCheck = document.querySelector("[data-create-account]");
+const createAccountFields = document.querySelector("[data-create-account-fields]");
+
+const applyUserToForm = (user)=>{
+  if(!form || !user) return;
+  if(user.email) form.email.value = user.email;
+  if(user.phone) form.phone.value = user.phone;
+  if(user.name) form.name.value = user.name;
+  const shipping = user.shipping || {};
+  if(shipping.address1) form.address1.value = shipping.address1;
+  if(shipping.address2) form.address2.value = shipping.address2;
+  if(shipping.city) form.city.value = shipping.city;
+  if(shipping.state){
+    stateSelect.value = shipping.state;
+    stateSelect.dispatchEvent(new Event("change"));
+  }
+  if(shipping.zip) form.zip.value = shipping.zip;
+};
+
+createAccountCheck?.addEventListener("change", ()=>{
+  if(!createAccountFields) return;
+  createAccountFields.hidden = !createAccountCheck.checked;
+});
+
+(async ()=>{
+  try{
+    const session = await ApiClient.accountSession();
+    if(session.authenticated && session.user){
+      signedInUser = session.user;
+      if(guestAccount) guestAccount.hidden = true;
+      if(accountBar){
+        accountBar.hidden = false;
+        accountBar.innerHTML = `Signed in as <strong>${session.user.email}</strong>. Review and complete the fields below. <a href="../account">Manage account</a>`;
+      }
+      applyUserToForm(session.user);
+      return;
+    }
+  }catch{
+    signedInUser = null;
+  }
+
+  if(guestAccount) guestAccount.hidden = false;
+  if(accountBar){
+    const next = encodeURIComponent(window.location.pathname.replace(/\/$/, "") || "/checkout");
+    accountBar.hidden = false;
+    accountBar.innerHTML = `Checking out as a guest. <a href="../account/login?next=${next}">Sign in</a> or <a href="../account/register?next=${next}">create an account</a> to save details — you can still complete this order without one.`;
+  }
+})();
 
 fillStates();
 renderSummary();

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#2a3f34" />
+  <title>Calm Canine | Admin Order</title>
+  <link rel="icon" href="../../assets/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="../../assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+</head>
+<body class="commerce-page admin-page admin-order-page">
+  <header class="site-header">
+    <a class="brand" href="../../"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <nav class="site-nav" aria-label="Admin">
+      <a href="../">Orders</a>
+      <button type="button" class="admin-logout" data-admin-logout>Log out</button>
+    </nav>
+  </header>
+
+  <main class="commerce-main admin-main">
+    <p class="commerce-back"><a href="../">← All orders</a></p>
+
+    <div data-order-loading>
+      <p class="commerce-lead">Loading order…</p>
+    </div>
+
+    <div data-order-missing hidden>
+      <div class="commerce-head">
+        <p class="eyebrow">ADMIN</p>
+        <h1>Order not found</h1>
+        <p class="commerce-lead">That order ID does not exist.</p>
+      </div>
+      <a class="btn btn-primary" href="../">Back to orders</a>
+    </div>
+
+    <div data-order-detail hidden>
+      <div class="commerce-head">
+        <p class="eyebrow">ORDER</p>
+        <h1 data-order-id></h1>
+        <p class="commerce-lead"><span data-order-date></span> · <span data-order-status></span></p>
+        <p class="field-error" data-action-error hidden></p>
+        <p class="admin-action-ok" data-action-ok hidden></p>
+      </div>
+
+      <div class="commerce-layout admin-detail-layout">
+        <div class="admin-detail-stack">
+          <section class="commerce-panel">
+            <h2>Customer</h2>
+            <dl class="admin-dl">
+              <div><dt>Name</dt><dd data-customer-name></dd></div>
+              <div><dt>Email</dt><dd data-customer-email></dd></div>
+              <div><dt>Phone</dt><dd data-customer-phone></dd></div>
+              <div><dt>Checkout</dt><dd data-customer-guest></dd></div>
+            </dl>
+          </section>
+
+          <section class="commerce-panel">
+            <h2>Shipping</h2>
+            <address data-shipping-address></address>
+          </section>
+
+          <section class="commerce-panel">
+            <h2>Items</h2>
+            <div class="order-lines" data-order-lines></div>
+          </section>
+
+          <section class="commerce-panel" data-subscriptions-panel hidden>
+            <h2>Subscriptions</h2>
+            <ul class="admin-sub-list" data-subscriptions></ul>
+          </section>
+
+          <section class="commerce-panel">
+            <h2>Payment</h2>
+            <dl class="admin-dl">
+              <div><dt>Method</dt><dd data-payment-method></dd></div>
+              <div><dt>Provider</dt><dd data-payment-provider></dd></div>
+              <div><dt>Status</dt><dd data-payment-status></dd></div>
+              <div><dt>Reference</dt><dd data-payment-reference></dd></div>
+            </dl>
+          </section>
+        </div>
+
+        <aside class="commerce-summary admin-aside">
+          <h2>Summary</h2>
+          <dl class="summary-rows">
+            <div><dt>Subtotal</dt><dd data-summary-subtotal></dd></div>
+            <div><dt>Shipping</dt><dd data-summary-shipping></dd></div>
+            <div><dt>Tax</dt><dd data-summary-tax></dd></div>
+            <div class="summary-total"><dt>Total</dt><dd data-summary-total></dd></div>
+          </dl>
+
+          <div class="admin-aside-section">
+            <h3>Fulfillment</h3>
+            <label class="field">
+              <span>Status</span>
+              <select data-fulfillment-status>
+                <option value="pending">pending</option>
+                <option value="processing">processing</option>
+                <option value="shipped">shipped</option>
+                <option value="cancelled">cancelled</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn-primary btn-block" data-save-fulfillment>Save fulfillment</button>
+          </div>
+
+          <div class="admin-aside-section">
+            <h3>Emails</h3>
+            <div class="admin-email-card" data-email-customer>
+              <p class="admin-email-title">Order confirmation</p>
+              <p class="admin-email-status" data-email-customer-status></p>
+              <dl class="admin-email-details" data-email-customer-details></dl>
+              <div class="admin-email-actions">
+                <button type="button" class="btn btn-ghost" data-mark-sent="customer">Mark as sent</button>
+                <button type="button" class="btn btn-ghost" data-requeue="customer">Send again</button>
+              </div>
+            </div>
+            <div class="admin-email-card" data-email-ops>
+              <p class="admin-email-title">Internal new-order alert</p>
+              <p class="admin-email-status" data-email-ops-status></p>
+              <dl class="admin-email-details" data-email-ops-details></dl>
+              <div class="admin-email-actions">
+                <button type="button" class="btn btn-ghost" data-mark-sent="ops">Mark as sent</button>
+                <button type="button" class="btn btn-ghost" data-requeue="ops">Send again</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script src="../../admin-api.js"></script>
+  <script src="admin-order.js"></script>
+</body>
+</html>

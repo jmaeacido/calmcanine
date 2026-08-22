@@ -21,6 +21,7 @@
     <nav class="site-nav" aria-label="Primary">
       <a href="../#about">About</a>
       <a href="../product">Shop</a>
+      <a href="../account" data-account-nav>Account</a>
       <a class="site-nav-cart" href="../cart">Cart <span class="cart-count" data-cart-count hidden>0</span></a>
     </nav>
   </header>
@@ -29,8 +30,10 @@
     <div class="commerce-head reveal">
       <p class="eyebrow">CHECKOUT</p>
       <h1>Complete your order.</h1>
-      <p class="commerce-lead">Enter your details below to place your order.</p>
+      <p class="commerce-lead">Enter contact, shipping, and payment details to place your order. An account is optional.</p>
     </div>
+
+    <div class="checkout-account-bar reveal" data-checkout-account hidden></div>
 
     <div class="checkout-empty" data-checkout-empty hidden>
       <p>Your cart is empty.</p>
@@ -86,6 +89,23 @@
           <p class="field-error" data-state-error hidden></p>
         </section>
 
+        <section class="checkout-section checkout-create-account" data-guest-account hidden>
+          <label class="field-checkbox">
+            <input type="checkbox" name="createAccount" data-create-account />
+            <span>Create an account to save these details for next time (optional)</span>
+          </label>
+          <div class="field-grid checkout-account-passwords" data-create-account-fields hidden>
+            <label class="field">
+              <span>Account password</span>
+              <input type="password" name="accountPassword" autocomplete="new-password" minlength="8" />
+            </label>
+            <label class="field">
+              <span>Confirm password</span>
+              <input type="password" name="accountPasswordConfirm" autocomplete="new-password" minlength="8" />
+            </label>
+          </div>
+        </section>
+
         <section class="checkout-section">
           <h2>Payment</h2>
           <div class="field-grid">
@@ -111,7 +131,7 @@
 
         <label class="checkout-terms field-checkbox">
           <input type="checkbox" name="acceptTerms" required data-accept-terms />
-          <span>I agree to the terms of sale and confirm I am 21 or older.</span>
+          <span>I agree to the <a href="../shipping-rules">Shipping Rules</a>, <a href="../refund-policy">Refund Policy</a>, <a href="../privacy-policy">Privacy Policy</a>, and <a href="../cbd-sales-restrictions">CBD Sales Restrictions</a>, and confirm I am 21 or older.</span>
         </label>
 
         <p class="field-error" data-form-error hidden></p>
@@ -140,11 +160,19 @@
     <a class="brand" href="../"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
     <p>Relaxation and comfort, one happy bite at a time.</p>
     <p class="legal">This product is not intended to diagnose, treat, cure, or prevent any disease.</p>
+    <nav class="footer-policies" aria-label="Policies">
+      <a href="../shipping-rules">Shipping</a>
+      <a href="../refund-policy">Refunds</a>
+      <a href="../privacy-policy">Privacy</a>
+      <a href="../cbd-sales-restrictions">CBD restrictions</a>
+    </nav>
   </footer>
 
   <script src="../cart-store.js"></script>
   <script src="../api-client.js"></script>
   <script src="../script.js"></script>
+  <script src="../account-nav.js"></script>
+  <script src="../newsletter.js"></script>
   <script src="checkout.js"></script>
 </body>
 </html>

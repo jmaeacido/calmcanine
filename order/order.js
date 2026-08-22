@@ -25,7 +25,7 @@ const renderOrder = (order)=>{
   if(emailLeadEl){
     emailLeadEl.textContent = order.email?.sent
       ? `We've received your order and sent a confirmation to ${order.customer.email}.`
-      : `We've received your order. A confirmation email will be sent to ${order.customer.email} once mail delivery is connected.`;
+      : `We've received your order. A confirmation is on its way to ${order.customer.email}.`;
   }
 
   document.querySelector("[data-order-lines]").innerHTML = order.items.map(item=>`

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#2a3f34" />
+  <title>Calm Canine | Admin Orders</title>
+  <link rel="icon" href="../assets/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="../assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="commerce-page admin-page">
+  <header class="site-header">
+    <a class="brand" href="../"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <nav class="site-nav" aria-label="Admin">
+      <a href="./">Orders</a>
+      <button type="button" class="admin-logout" data-admin-logout>Log out</button>
+    </nav>
+  </header>
+
+  <main class="commerce-main admin-main">
+    <div class="commerce-head">
+      <p class="eyebrow">ADMIN</p>
+      <h1>Orders &amp; purchases</h1>
+      <p class="commerce-lead">Review who purchased, what they bought, email queue status, and fulfillment.</p>
+    </div>
+
+    <div class="commerce-panel admin-toolbar">
+      <label class="field admin-search-field">
+        <span>Search</span>
+        <input type="search" placeholder="Order ID or customer email" data-admin-search />
+      </label>
+      <p class="admin-count" data-admin-count></p>
+    </div>
+
+    <div class="commerce-panel admin-table-wrap" data-admin-loading>
+      <p class="commerce-lead">Loading orders…</p>
+    </div>
+
+    <div class="commerce-panel admin-table-wrap" data-admin-empty hidden>
+      <p class="commerce-lead">No orders match your search.</p>
+    </div>
+
+    <div class="commerce-panel admin-table-wrap" data-admin-table-panel hidden>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Fulfillment</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody data-admin-rows></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="../admin-api.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

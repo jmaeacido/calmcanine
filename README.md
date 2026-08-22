@@ -8,7 +8,7 @@ A marketing site and on-site shop for **Calm Canine** — organic pumpkin and pe
 
 ## Overview
 
-Calm Canine combines a static marketing landing page with a lightweight PHP order API. The homepage moves from an emotional hero into product education, science-backed context, serving guidance, lifestyle gallery, and a conversion-focused shop CTA — with a fully polished mobile experience and no frontend build step. Cart, checkout, and order confirmation run in the browser and talk to JSON endpoints backed by file storage.
+Calm Canine combines a static marketing landing page with a lightweight PHP order API. The homepage moves from an emotional hero into product education, science-backed context, serving guidance, lifestyle gallery, and a conversion-focused shop CTA — with a fully polished mobile experience and no frontend build step. Cart, checkout, optional customer accounts, and order confirmation run in the browser and talk to JSON endpoints backed by file storage.
 
 ## Features
 
@@ -56,18 +56,28 @@ Calm Canine combines a static marketing landing page with a lightweight PHP orde
 - **`/checkout`** — contact, shipping, payment, and place order
 - **`/order`** — order confirmation with summary and shipping details
 - Cart persists in `localStorage`; CBD-restricted states blocked at checkout
+- Optional **customer accounts** (`/account`) — register, sign in, save contact/shipping, view order history
+- Optional **newsletter prompt** on register and checkout; skipped after a successful subscribe
+- Guest checkout remains fully supported; contact, shipping, payment, and terms are still required for every order
 - Live tax and totals from the quote API when a shipping state is selected
 - Orders submitted to the PHP API; confirmation page loads order details by ID
 
 ### Order API
 - **`POST /api/quote`** — normalize line items, compute subtotal, shipping, tax, and total
-- **`POST /api/orders/create`** — validate payload, process payment (stub), persist order, queue email and fulfillment
+- **`POST /api/orders/create`** — validate payload, process payment (stub), persist order, send confirmation and ops emails over Gmail SMTP, queue fulfillment
 - **`GET /api/orders/{id}`** — return a sanitized order for the confirmation page
 - **`GET /api/orders/export`** — fulfillment queue export (JSON or CSV; optional bearer/key auth via `FULFILLMENT_EXPORT_KEY`)
 - Orders saved under `data/orders/`; email jobs under `data/email-queue/`; fulfillment queue in `data/fulfillment/queue.jsonl`
 
+### Admin (`/admin`)
+- Password-protected session login at `/admin/login` (`ADMIN_PASSWORD` in `.env`)
+- **`/admin`** — list orders (customer, items, total, fulfillment, email flags); search by ID or email
+- **`/admin/order?id=`** — full order detail; update fulfillment status; mark confirmation/ops emails sent or re-queue
+- Admin APIs under `/api/admin/*` require an authenticated PHP session (`credentials: same-origin`)
+
 ### Global
 - Sticky header with mobile nav drawer (Escape / outside-click close)
+- Account / Sign in in the primary nav (session-aware label)
 - Scroll reveal animations via `IntersectionObserver`
 - Safe-area inset support for notched devices
 - `prefers-reduced-motion` respected across animations and video playback
@@ -80,7 +90,7 @@ Calm Canine combines a static marketing landing page with a lightweight PHP orde
 | **HTML5** | Semantic, accessible markup |
 | **CSS3** | Custom properties, grid/flex, clamp-based typography, scroll animations (~3,785 lines) |
 | **Vanilla JavaScript** | No framework, no build step (~930 lines across page scripts + shared modules) |
-| **PHP 8+** | Lightweight JSON API for quotes and orders (~250 lines in `bootstrap.php` + endpoint scripts) |
+| **PHP 8+** | Lightweight JSON API for quotes, orders, and customer accounts |
 | **Apache** | Clean URLs and API routing via `.htaccess` (`mod_rewrite`) |
 | **Google Fonts** | [Cormorant Garamond](https://fonts.google.com/specimen/Cormorant+Garamond) (brand display), [Montserrat](https://fonts.google.com/specimen/Montserrat) (Gotham stand-in), [Poppins](https://fonts.google.com/specimen/Poppins) (TT Norms stand-in) |
 | **Brand palette** | Gold `#c6a262`, forest `#2a3f34`, paper `#eee7e7`, sage `#63735c`, sand `#e6c68e` |
@@ -92,7 +102,28 @@ Calm Canine combines a static marketing landing page with a lightweight PHP orde
 calmcanine/
 ├── index.html              # Main landing page
 ├── .htaccess               # Clean URLs for pages and API routes
-├── api-client.js           # fetch wrapper for quote / order endpoints
+├── admin/
+│   ├── index.html          # Orders list (served at /admin)
+│   ├── admin.js
+│   ├── login/
+│   │   ├── index.html      # Admin password login
+│   │   └── admin-login.js
+│   └── order/
+│       ├── index.html      # Order detail + actions
+│       └── admin-order.js
+├── admin-api.js            # Credentialed fetch client for admin APIs
+├── account/
+│   ├── index.html          # Account profile + orders (served at /account)
+│   ├── account.js
+│   ├── login/
+│   │   ├── index.html
+│   │   └── account-login.js
+│   └── register/
+│       ├── index.html
+│       └── account-register.js
+├── account-nav.js          # Header Sign in / Account label
+├── newsletter.js           # Optional newsletter modal on register and checkout
+├── api-client.js           # fetch wrapper for quote, order, and account endpoints
 ├── cart-store.js           # Shared cart, pricing, and order logic
 ├── product/
 │   └── index.html          # Shop page (served at /product)
@@ -107,16 +138,33 @@ calmcanine/
 │   └── order.js
 ├── product.js              # Product page interactions
 ├── api/
-│   ├── bootstrap.php       # Catalog, tax, quote, order, queue helpers
-│   ├── quote.php           # POST /api/quote
+│   ├── bootstrap.php       # Catalog, tax, quote, order, queue, admin helpers
+│   ├── account-register.php
+│   ├── account-login.php
+│   ├── account-logout.php
+│   ├── account-session.php
+│   ├── account-update.php
+│   ├── account-orders.php
+│   ├── newsletter-status.php
+│   ├── newsletter-subscribe.php
+│   ├── mail.php            # Gmail SMTP sender and message templates
 │   ├── orders-create.php   # POST /api/orders/create
 │   ├── orders-get.php      # GET /api/orders/{id}
 │   ├── orders-export.php   # GET /api/orders/export
+│   ├── admin-login.php     # POST /api/admin/login
+│   ├── admin-logout.php    # POST /api/admin/logout
+│   ├── admin-session.php   # GET /api/admin/session
+│   ├── admin-orders-list.php
+│   ├── admin-orders-get.php
+│   ├── admin-orders-fulfillment.php
+│   ├── admin-orders-email.php
 │   └── config/
 │       ├── catalog.json    # Product, shipping, restricted states
 │       └── tax-rates.json  # State tax rates
 ├── data/                   # Runtime storage (gitignored except .htaccess)
 │   ├── orders/             # One JSON file per order
+│   ├── users/              # Customer accounts (hashed passwords)
+│   ├── newsletter/         # Optional newsletter subscribers
 │   ├── email-queue/        # Queued confirmation / ops emails
 │   └── fulfillment/        # queue.jsonl for export
 ├── scripts/
@@ -140,7 +188,7 @@ calmcanine/
 │   ├── bkgd-video.mp4
 │   ├── small-dog.png, medium-dog.png, large-dog.png
 │   └── favicon.{svg,png}, favicon-source.png
-├── .env.example            # Optional payment, email, export keys
+├── .env.example            # Optional payment, email, export, admin password
 ├── README.md
 └── README.txt              # Original quick-start notes
 ```
@@ -157,7 +205,7 @@ With [Laragon](https://laragon.org/), place the repo under `www/calmcanine` and 
 http://localhost/calmcanine/
 ```
 
-Clean URLs (`/product`, `/cart`, `/checkout`, `/api/quote`, etc.) are handled by the root `.htaccess`.
+Clean URLs (`/product`, `/cart`, `/checkout`, `/account`, `/api/quote`, etc.) are handled by the root `.htaccess`.
 
 ### Static preview only
 
@@ -182,11 +230,34 @@ Copy `.env.example` to `.env` and set values when connecting live services:
 |----------|---------|
 | `PAYMENT_PROVIDER` | Payment integration (e.g. `stripe`) |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
-| `EMAIL_PROVIDER` | Email integration (e.g. `resend`) |
-| `RESEND_API_KEY` | Resend API key |
+| `EMAIL_PROVIDER` | Mail transport (`gmail`) |
+| `SMTP_HOST` | SMTP host (default `smtp.gmail.com`) |
+| `SMTP_PORT` | SMTP port (default `587`) |
+| `SMTP_ENCRYPTION` | `tls` (STARTTLS on 587) or `ssl` (465) |
+| `SMTP_USERNAME` | Full Gmail address |
+| `SMTP_PASSWORD` | Gmail [App Password](https://support.google.com/accounts/answer/185833) (not the account password) |
+| `MAIL_FROM` | From address (usually the same Gmail address) |
+| `MAIL_FROM_NAME` | From display name |
+| `MAIL_OPS_TO` | Inbox for new-order alerts |
 | `FULFILLMENT_EXPORT_KEY` | Protects `/api/orders/export` (Bearer token or `?key=`) |
+| `ADMIN_PASSWORD` | Password for `/admin` session login (required for admin access) |
 
-Payment is currently a **stub** (`authorized_stub`); email files are queued but not sent until a provider is wired up.
+Payment is currently a **stub** (`authorized_stub`). Order confirmation, ops alerts, and account welcome emails send through Gmail SMTP when `SMTP_USERNAME` and `SMTP_PASSWORD` are set. If SMTP is missing or a send fails, the order or account is still saved and the job is kept for a retry from admin. The API loads `.env` from the project root via `cc_load_env()` in `bootstrap.php`.
+
+### Gmail SMTP setup
+
+1. Turn on 2-Step Verification for the Gmail account.
+2. Create an [App Password](https://support.google.com/accounts/answer/185833) for Mail.
+3. Copy `.env.example` to `.env` (or update `.env`) and set `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAIL_FROM`, and `MAIL_OPS_TO`.
+4. Place an order or create an account to send a test. Admin order detail can **Send again** if a message failed.
+
+### Admin setup
+
+1. Copy `.env.example` to `.env` and set `ADMIN_PASSWORD` to a strong password.
+2. Visit `/admin` (or `/admin/login`) and sign in.
+3. Use the orders list and order detail pages to update fulfillment and email queue status.
+
+Admin is not linked from the public site header — bookmark `/admin` for ops use.
 
 ## Deployment
 
@@ -194,9 +265,9 @@ There is **no production hosting configured yet**. The site runs locally via Lar
 
 When ready to go live, deploy the full repo to an Apache/PHP host with `mod_rewrite` enabled. Ensure:
 
-- PHP 8+ with write access to `data/` (orders, email queue, fulfillment)
+- PHP 8+ with write access to `data/` (orders, users, email queue, fulfillment)
 - `.htaccess` honored at the document root
-- Optional `.env` for export key and future payment/email providers
+- Optional `.env` for admin password, Gmail SMTP, export key, and future payment providers
 - No frontend build step — serve the repo root as the document root
 
 ## API Reference
@@ -204,9 +275,24 @@ When ready to go live, deploy the full repo to an Apache/PHP host with `mod_rewr
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/api/quote` | Body: `{ items, state }` → normalized lines, subtotal, shipping, tax, total |
-| `POST` | `/api/orders/create` | Body: customer, shipping, items, paymentMethod, acceptTerms → order |
+| `POST` | `/api/orders/create` | Body: customer, shipping, items, paymentMethod, acceptTerms → order (guest or signed-in; attaches `accountId` when a customer session exists) |
 | `GET` | `/api/orders/{id}` | Public order payload for confirmation page |
+| `POST` | `/api/account/register` | Body: `{ email, password, name?, phone?, shipping? }` → session cookie |
+| `POST` | `/api/account/login` | Body: `{ email, password }` → session cookie |
+| `POST` | `/api/account/logout` | Clear customer session |
+| `GET` | `/api/account/session` | `{ authenticated, user }` |
+| `PATCH` | `/api/account/update` | Body: `{ name, phone, shipping }` (auth required) |
+| `GET` | `/api/newsletter/status` | `?email=` → `{ subscribed }` |
+| `POST` | `/api/newsletter/subscribe` | Body: `{ email, name?, source? }` |
 | `GET` | `/api/orders/export` | Fulfillment queue; `?format=csv` for CSV download |
+| `POST` | `/api/admin/login` | Body: `{ password }` → session cookie |
+| `POST` | `/api/admin/logout` | Clear admin session |
+| `GET` | `/api/admin/session` | `{ authenticated }` |
+| `GET` | `/api/admin/orders` | Admin order summaries (auth required) |
+| `GET` | `/api/admin/orders/{id}` | Full admin order + email queue jobs |
+| `PATCH` | `/api/admin/orders/{id}/fulfillment` | Body: `{ status }` (`pending` \| `processing` \| `shipped` \| `cancelled`) |
+| `POST` | `/api/admin/orders/{id}/emails/{kind}/mark-sent` | `kind`: `customer` \| `ops` |
+| `POST` | `/api/admin/orders/{id}/emails/{kind}/requeue` | Send confirmation or ops email again via Gmail SMTP |
 
 Catalog pricing, shipping rules, and restricted states live in `api/config/catalog.json`. Tax rates are in `api/config/tax-rates.json`.
 
@@ -230,7 +316,7 @@ Before publishing or embedding in production:
 1. Review all **CBD-related claims**, dosage wording, age restrictions, and veterinary disclaimers for the market where the product will be sold.
 2. Confirm shop, cart, checkout, and API URLs resolve correctly in your deployment environment.
 3. Replace the **payment stub** with a PCI-compliant provider before accepting real card data.
-4. Wire up email delivery for order confirmations and ops notifications.
+4. Confirm Gmail SMTP credentials send order confirmations and ops alerts.
 5. Compress large JPG/PNG assets if load time becomes a concern.
 6. Footer and serving-section fine print should be reviewed by legal/compliance as needed.
 

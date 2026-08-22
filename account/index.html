@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Your Calm Canine account — saved details and order history." />
+  <meta name="theme-color" content="#2a3f34" />
+  <title>Calm Canine | Your Account</title>
+  <link rel="icon" href="../assets/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="../assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="commerce-page account-page">
+  <div class="cursor-glow"></div>
+
+  <header class="site-header">
+    <a class="brand" href="../"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="../#about">About</a>
+      <a href="../product">Shop</a>
+      <a href="./" aria-current="page" data-account-nav data-account-current="true">Account</a>
+      <a class="site-nav-cart" href="../cart">Cart <span class="cart-count" data-cart-count hidden>0</span></a>
+    </nav>
+  </header>
+
+  <main class="commerce-main" data-account-main hidden>
+    <div class="commerce-head">
+      <p class="eyebrow">ACCOUNT</p>
+      <h1>Your details.</h1>
+      <p class="commerce-lead">Update the information we can prefill at checkout. You’ll still confirm shipping, contact, and payment when you place an order.</p>
+    </div>
+
+    <div class="account-layout">
+      <form class="commerce-panel" data-profile-form novalidate>
+        <section class="checkout-section">
+          <h2>Contact</h2>
+          <div class="field-grid">
+            <label class="field field-span-2">
+              <span>Email</span>
+              <input type="email" name="email" autocomplete="email" readonly data-profile-email />
+            </label>
+            <label class="field">
+              <span>Full name</span>
+              <input type="text" name="name" autocomplete="name" required />
+            </label>
+            <label class="field">
+              <span>Phone</span>
+              <input type="tel" name="phone" autocomplete="tel" />
+            </label>
+          </div>
+        </section>
+        <section class="checkout-section">
+          <h2>Saved shipping</h2>
+          <div class="field-grid">
+            <label class="field field-span-2">
+              <span>Street address</span>
+              <input type="text" name="address1" autocomplete="address-line1" />
+            </label>
+            <label class="field field-span-2">
+              <span>Apartment, suite, etc. (optional)</span>
+              <input type="text" name="address2" autocomplete="address-line2" />
+            </label>
+            <label class="field">
+              <span>City</span>
+              <input type="text" name="city" autocomplete="address-level2" />
+            </label>
+            <label class="field">
+              <span>State</span>
+              <select name="state" autocomplete="address-level1" data-state-select>
+                <option value="">Select state</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>ZIP code</span>
+              <input type="text" name="zip" inputmode="numeric" autocomplete="postal-code" />
+            </label>
+          </div>
+        </section>
+        <p class="field-error" data-form-error hidden></p>
+        <p class="field-success" data-form-success hidden>Saved.</p>
+        <div class="account-actions">
+          <button type="submit" class="btn btn-primary" data-save>Save details</button>
+          <button type="button" class="btn btn-ghost" data-logout>Sign out</button>
+        </div>
+      </form>
+
+      <aside class="commerce-panel account-orders">
+        <h2>Orders</h2>
+        <p class="account-orders-empty" data-orders-empty hidden>No orders yet. You can shop as a guest or while signed in.</p>
+        <div class="account-order-list" data-orders></div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <a class="brand" href="../"><span class="brand-mark">🐾</span><span>CALM CANINE</span></a>
+    <p>Relaxation and comfort, one happy bite at a time.</p>
+    <p class="legal">This product is not intended to diagnose, treat, cure, or prevent any disease.</p>
+    <nav class="footer-policies" aria-label="Policies">
+      <a href="../shipping-rules">Shipping</a>
+      <a href="../refund-policy">Refunds</a>
+      <a href="../privacy-policy">Privacy</a>
+      <a href="../cbd-sales-restrictions">CBD restrictions</a>
+    </nav>
+  </footer>
+
+  <script src="../cart-store.js"></script>
+  <script src="../api-client.js"></script>
+  <script src="../script.js"></script>
+  <script src="../account-nav.js"></script>
+  <script src="account.js"></script>
+</body>
+</html>
