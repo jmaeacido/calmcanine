@@ -4712,6 +4712,28 @@ footer .brand:focus-visible,
   color: var(--muted);
 }
 
+.contact-page-layout {
+  align-items: start;
+}
+
+.contact-page-layout textarea {
+  resize: vertical;
+  min-height: 10rem;
+}
+
+.contact-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.form-success {
+  color: #2a3f34;
+  font-weight: 600;
+}
+
 .footer-policies {
   display: flex;
   flex-wrap: wrap;

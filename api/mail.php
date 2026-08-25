@@ -60,7 +60,7 @@ function cc_smtp_cmd($fp, string $command, array $okCodes): string {
     return $response;
 }
 
-function cc_mail_send(string $to, string $subject, string $text, string $html): array {
+function cc_mail_send(string $to, string $subject, string $text, string $html, string $replyTo = ''): array {
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
         return ['ok' => false, 'error' => 'Invalid recipient address.'];
     }
@@ -129,11 +129,12 @@ function cc_mail_send(string $to, string $subject, string $text, string $html): 
         $dotText = preg_replace('/^\./m', '..', $text) ?? $text;
         $dotHtml = preg_replace('/^\./m', '..', $html) ?? $html;
 
+        $replyToHeader = filter_var($replyTo, FILTER_VALIDATE_EMAIL) ? $replyTo : $from;
         $body = implode("\r\n", [
             'Date: ' . $date,
             'From: ' . $fromHeader,
             'To: <' . $to . '>',
-            'Reply-To: ' . $fromHeader,
+            'Reply-To: <' . $replyToHeader . '>',
             'Message-ID: ' . $messageId,
             'Subject: ' . $encodedSubject,
             'MIME-Version: 1.0',

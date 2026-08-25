@@ -67,6 +67,11 @@ const ApiClient = (()=>{
     body: JSON.stringify(payload)
   });
 
+  const contactSend = (payload)=>request("/contact", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
   return {
     apiRoot,
     siteRoot,
@@ -80,6 +85,7 @@ const ApiClient = (()=>{
     accountUpdate,
     accountOrders,
     newsletterStatus,
-    newsletterSubscribe
+    newsletterSubscribe,
+    contactSend
   };
 })();
