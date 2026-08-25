@@ -4714,7 +4714,6 @@ footer .brand:focus-visible,
 
 .admin-direction-field { min-width: 150px; }
 .admin-refresh-button { min-height: 46px; }
-.admin-email-sync { margin: -4px 0 16px; }
 .admin-email-table { min-width: 920px; }
 .admin-email-direction { display:inline-block; padding:4px 8px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; background:#e8eee9; color:#2a3f34; }
 .admin-email-direction--inbound { background:#e4eef8; color:#24557c; }

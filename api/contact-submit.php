@@ -48,7 +48,7 @@ $html = cc_mail_wrap_html('New contact message',
     . '<p style="margin:0;white-space:pre-wrap;line-height:1.6;">' . cc_mail_escape($message) . '</p>'
 );
 
-// Preserve the submission independently of notification delivery and mailbox sync.
+// Preserve the submission before notification delivery, matching the Java Lava flow.
 cc_email_archive_save([
     'id' => 'contact:' . bin2hex(random_bytes(12)),
     'direction' => 'inbound',
@@ -65,6 +65,19 @@ $result = cc_mail_send('info@serum72.com', $subject, $text, $html, $email);
 if (!$result['ok']) {
     error_log('Calm Canine contact email failed: ' . ($result['error'] ?? 'Unknown error'));
     cc_send_json(502, ['error' => 'We could not send your message right now. Please email info@serum72.com directly.']);
+}
+
+$replySubject = 'We received your Calm Canine message';
+$replyText = "Hi {$name},\n\nThanks for contacting Calm Canine. We received your message and our team will follow up soon.\n\nYour message:\n{$message}\n\nCalm Canine\n";
+$replyHtml = cc_mail_wrap_html('Message received',
+    '<p style="margin:0 0 16px;line-height:1.6;">Hi ' . cc_mail_escape($name) . ',</p>'
+    . '<p style="margin:0 0 16px;line-height:1.6;">Thanks for contacting Calm Canine. We received your message and our team will follow up soon.</p>'
+    . '<p style="margin:0 0 8px;line-height:1.6;"><strong>Your message:</strong></p>'
+    . '<p style="margin:0;white-space:pre-wrap;line-height:1.6;">' . cc_mail_escape($message) . '</p>'
+);
+$autoReply = cc_mail_send($email, $replySubject, $replyText, $replyHtml, 'info@serum72.com');
+if (!$autoReply['ok']) {
+    error_log('Calm Canine contact auto-reply failed: ' . ($autoReply['error'] ?? 'Unknown error'));
 }
 
 cc_send_json(200, ['ok' => true, 'message' => 'Thanks — your message has been sent.']);

@@ -74,7 +74,7 @@ Calm Canine combines a static marketing landing page with a lightweight PHP orde
 - **`/admin`** — list orders (customer, items, total, fulfillment, email flags); search by ID or email
 - **`/admin/order?id=`** — full order detail; update fulfillment status; mark confirmation/ops emails sent or re-queue
 - Admin APIs under `/api/admin/*` require an authenticated PHP session (`credentials: same-origin`)
-- **`/admin/emails`** — searchable inbound/outbound mailbox; archives contact forms, synchronizes Google Workspace mail, and audits every Brevo SMTP attempt
+- **`/admin/emails`** — searchable mailing records; archives contact forms and audits every Brevo SMTP attempt
 
 ### Global
 - Sticky header with mobile nav drawer (Escape / outside-click close)
@@ -148,7 +148,7 @@ calmcanine/
 │   ├── account-orders.php
 │   ├── newsletter-status.php
 │   ├── newsletter-subscribe.php
-│   ├── mail.php            # Brevo SMTP sender, Google IMAP sync, and templates
+│   ├── mail.php            # Brevo SMTP sender, mailing archive, and templates
 │   ├── orders-create.php   # POST /api/orders/create
 │   ├── orders-get.php      # GET /api/orders/{id}
 │   ├── orders-export.php   # GET /api/orders/export
@@ -240,20 +240,16 @@ Copy `.env.example` to `.env` and set values when connecting live services:
 | `MAIL_FROM` | Verified Brevo sender address |
 | `MAIL_FROM_NAME` | From display name |
 | `MAIL_OPS_TO` | Inbox for new-order alerts |
-| `IMAP_HOST` / `IMAP_PORT` | Google Workspace IMAP endpoint (`imap.gmail.com:993`) |
-| `IMAP_USERNAME` | Google Workspace mailbox address |
-| `IMAP_PASSWORD` | Google App Password for mailbox synchronization |
 | `FULFILLMENT_EXPORT_KEY` | Protects `/api/orders/export` (Bearer token or `?key=`) |
 | `ADMIN_PASSWORD` | Password for `/admin` session login (required for admin access) |
 
 Payment is currently a **stub** (`authorized_stub`). Order confirmations, ops alerts, contact notifications, and welcome emails send through Brevo SMTP. Contact submissions are archived before notification delivery, and failed SMTP attempts remain visible in admin.
 
-### Brevo outbound and Google Workspace inbound setup
+### Contact records and Brevo email setup
 
 1. Verify the sender in Brevo, create an SMTP key, and set `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAIL_FROM`, and `MAIL_OPS_TO`.
-2. Enable 2-Step Verification for the Google Workspace mailbox and create an [App Password](https://support.google.com/accounts/answer/185833).
-3. Set `IMAP_USERNAME` to the mailbox address and `IMAP_PASSWORD` to its App Password.
-4. Submit the contact form and place an order. Both directions should appear under **Admin → Emails**.
+2. Submit the contact form. The submission is saved before notification delivery, then the platform emails operations and sends the visitor an acknowledgment.
+3. Place an order to test transactional delivery. Saved submissions and outbound attempts appear under **Admin → Emails**.
 
 ### Admin setup
 
@@ -271,7 +267,7 @@ When ready to go live, deploy the full repo to an Apache/PHP host with `mod_rewr
 
 - PHP 8+ with write access to `data/` (orders, users, email queue, fulfillment)
 - `.htaccess` honored at the document root
-- Optional `.env` for admin password, Brevo SMTP, Google Workspace IMAP, export key, and payment providers
+- Optional `.env` for admin password, Brevo SMTP, export key, and payment providers
 - No frontend build step — serve the repo root as the document root
 
 ## API Reference
@@ -320,7 +316,7 @@ Before publishing or embedding in production:
 1. Review all **CBD-related claims**, dosage wording, age restrictions, and veterinary disclaimers for the market where the product will be sold.
 2. Confirm shop, cart, checkout, and API URLs resolve correctly in your deployment environment.
 3. Replace the **payment stub** with a PCI-compliant provider before accepting real card data.
-4. Confirm Brevo SMTP sends transactional mail and Google Workspace IMAP synchronizes the mailbox.
+4. Confirm contact submissions are saved and Brevo SMTP sends notifications, acknowledgments, and transactional mail.
 5. Compress large JPG/PNG assets if load time becomes a concern.
 6. Footer and serving-section fine print should be reviewed by legal/compliance as needed.
 
