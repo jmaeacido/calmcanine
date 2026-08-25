@@ -43,7 +43,7 @@
       <div class="commerce-head">
         <p class="eyebrow">ORDER</p>
         <h1 data-order-id></h1>
-        <p class="commerce-lead"><span data-order-date></span> · <span data-order-status></span></p>
+        <div class="admin-order-meta"><span data-order-date></span><span class="admin-status-pill" data-order-status></span></div>
         <p class="field-error" data-action-error hidden></p>
         <p class="admin-action-ok" data-action-ok hidden></p>
       </div>
@@ -81,8 +81,33 @@
               <div><dt>Method</dt><dd data-payment-method></dd></div>
               <div><dt>Provider</dt><dd data-payment-provider></dd></div>
               <div><dt>Status</dt><dd data-payment-status></dd></div>
-              <div><dt>Reference</dt><dd data-payment-reference></dd></div>
+              <div><dt>Reference</dt><dd class="admin-payment-reference"><code data-payment-reference></code><button type="button" class="admin-copy-button" data-copy-payment>Copy</button></dd></div>
             </dl>
+          </section>
+
+          <section class="commerce-panel admin-emails-panel">
+            <div class="admin-section-heading">
+              <div><p class="eyebrow">DELIVERY</p><h2>Order emails</h2></div>
+              <a href="../emails/">View email log</a>
+            </div>
+            <div class="admin-email-grid">
+              <details class="admin-email-card" data-email-customer>
+                <summary><span>Order confirmation</span><span class="admin-email-status" data-email-customer-status></span></summary>
+                <dl class="admin-email-details" data-email-customer-details></dl>
+                <div class="admin-email-actions">
+                  <button type="button" class="btn btn-ghost" data-mark-sent="customer">Mark as sent</button>
+                  <button type="button" class="btn btn-ghost" data-requeue="customer">Send again</button>
+                </div>
+              </details>
+              <details class="admin-email-card" data-email-ops>
+                <summary><span>Internal new-order alert</span><span class="admin-email-status" data-email-ops-status></span></summary>
+                <dl class="admin-email-details" data-email-ops-details></dl>
+                <div class="admin-email-actions">
+                  <button type="button" class="btn btn-ghost" data-mark-sent="ops">Mark as sent</button>
+                  <button type="button" class="btn btn-ghost" data-requeue="ops">Send again</button>
+                </div>
+              </details>
+            </div>
           </section>
         </div>
 
@@ -109,27 +134,6 @@
             <button type="button" class="btn btn-primary btn-block" data-save-fulfillment>Save fulfillment</button>
           </div>
 
-          <div class="admin-aside-section">
-            <h3>Emails</h3>
-            <div class="admin-email-card" data-email-customer>
-              <p class="admin-email-title">Order confirmation</p>
-              <p class="admin-email-status" data-email-customer-status></p>
-              <dl class="admin-email-details" data-email-customer-details></dl>
-              <div class="admin-email-actions">
-                <button type="button" class="btn btn-ghost" data-mark-sent="customer">Mark as sent</button>
-                <button type="button" class="btn btn-ghost" data-requeue="customer">Send again</button>
-              </div>
-            </div>
-            <div class="admin-email-card" data-email-ops>
-              <p class="admin-email-title">Internal new-order alert</p>
-              <p class="admin-email-status" data-email-ops-status></p>
-              <dl class="admin-email-details" data-email-ops-details></dl>
-              <div class="admin-email-actions">
-                <button type="button" class="btn btn-ghost" data-mark-sent="ops">Mark as sent</button>
-                <button type="button" class="btn btn-ghost" data-requeue="ops">Send again</button>
-              </div>
-            </div>
-          </div>
         </aside>
       </div>
     </div>

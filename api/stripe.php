@@ -49,6 +49,31 @@ function cc_site_url(): string {
     return $scheme . '://' . $host . $base;
 }
 
+function cc_stripe_card_summary(array $session): array {
+    $paymentMethod = null;
+    $intent = $session['payment_intent'] ?? null;
+    if (is_array($intent)) $paymentMethod = $intent['payment_method'] ?? null;
+
+    $subscription = $session['subscription'] ?? null;
+    if ($paymentMethod === null && is_array($subscription)) {
+        $paymentMethod = $subscription['default_payment_method'] ?? null;
+    }
+
+    if (is_string($paymentMethod) && str_starts_with($paymentMethod, 'pm_')) {
+        $paymentMethod = cc_stripe_request('GET', 'payment_methods/' . rawurlencode($paymentMethod));
+    }
+
+    $card = is_array($paymentMethod) ? ($paymentMethod['card'] ?? null) : null;
+    if (!is_array($card)) return ['brand' => 'Card', 'last4' => '----'];
+
+    $brand = trim((string)($card['brand'] ?? ''));
+    $last4 = trim((string)($card['last4'] ?? ''));
+    return [
+        'brand' => $brand !== '' ? ucfirst($brand) : 'Card',
+        'last4' => preg_match('/^\d{4}$/', $last4) ? $last4 : '----',
+    ];
+}
+
 function cc_checkout_dir(): string {
     return cc_ensure_dir('checkouts');
 }
@@ -119,7 +144,9 @@ function cc_complete_checkout(string $sessionId): array {
     if (!preg_match('/^cs_(test_|live_)?[A-Za-z0-9_]+$/', $sessionId)) {
         cc_send_json(400, ['error' => 'Invalid checkout session.']);
     }
-    $session = cc_stripe_request('GET', 'checkout/sessions/' . rawurlencode($sessionId), ['expand' => ['payment_intent', 'subscription']]);
+    $session = cc_stripe_request('GET', 'checkout/sessions/' . rawurlencode($sessionId), [
+        'expand' => ['payment_intent.payment_method', 'subscription.default_payment_method'],
+    ]);
     if (($session['status'] ?? '') !== 'complete' || ($session['payment_status'] ?? '') !== 'paid') {
         cc_send_json(409, ['error' => 'Payment has not been completed.']);
     }
@@ -135,12 +162,13 @@ function cc_complete_checkout(string $sessionId): array {
         flock($fp, LOCK_UN); fclose($fp);
         if ($existing) return cc_public_order($existing);
     }
+    $card = cc_stripe_card_summary($session);
     $payment = [
         'provider' => 'stripe',
         'status' => 'paid',
         'reference' => $sessionId,
-        'brand' => 'Card',
-        'last4' => '••••',
+        'brand' => $card['brand'],
+        'last4' => $card['last4'],
         'subscriptionId' => is_array($session['subscription'] ?? null) ? ($session['subscription']['id'] ?? null) : ($session['subscription'] ?? null),
     ];
     $order = cc_create_order($record['payload'], $payment);

@@ -42,10 +42,12 @@ if ($message === '' || mb_strlen($message) < 10 || mb_strlen($message) > 5000) {
 $subject = 'Calm Canine contact form — ' . preg_replace('/[\r\n]+/', ' ', $name);
 $text = "New Calm Canine contact message\n\nName: {$name}\nEmail: {$email}\nPhone: " . ($phone !== '' ? $phone : 'Not provided') . "\n\nMessage:\n{$message}\n";
 $html = cc_mail_wrap_html('New contact message',
-    '<p style="margin:0 0 8px;line-height:1.6;"><strong>Name:</strong> ' . cc_mail_escape($name) . '</p>'
-    . '<p style="margin:0 0 8px;line-height:1.6;"><strong>Email:</strong> <a href="mailto:' . cc_mail_escape($email) . '">' . cc_mail_escape($email) . '</a></p>'
-    . '<p style="margin:0 0 20px;line-height:1.6;"><strong>Phone:</strong> ' . cc_mail_escape($phone !== '' ? $phone : 'Not provided') . '</p>'
-    . '<p style="margin:0;white-space:pre-wrap;line-height:1.6;">' . cc_mail_escape($message) . '</p>'
+    '<p style="margin:0 0 18px;font-size:15px;line-height:1.65;color:#53675d;">A visitor sent a message through the Calm Canine contact form.</p>'
+    . cc_mail_panel('<p style="margin:0 0 8px;font-size:14px;line-height:1.6;"><strong>Name:</strong> ' . cc_mail_escape($name) . '</p>'
+    . '<p style="margin:0 0 8px;font-size:14px;line-height:1.6;"><strong>Email:</strong> <a style="color:#29483a;" href="mailto:' . cc_mail_escape($email) . '">' . cc_mail_escape($email) . '</a></p>'
+    . '<p style="margin:0;font-size:14px;line-height:1.6;"><strong>Phone:</strong> ' . cc_mail_escape($phone !== '' ? $phone : 'Not provided') . '</p>')
+    . '<p style="margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.1em;color:#718078;text-transform:uppercase;">Message</p>'
+    . '<div style="padding:16px 18px;border-left:3px solid #d8c7a2;background:#fbf8f5;font-size:15px;white-space:pre-wrap;line-height:1.7;color:#253d32;">' . cc_mail_escape($message) . '</div>'
 );
 
 // Preserve the submission before notification delivery, matching the Java Lava flow.
@@ -70,10 +72,10 @@ if (!$result['ok']) {
 $replySubject = 'We received your Calm Canine message';
 $replyText = "Hi {$name},\n\nThanks for contacting Calm Canine. We received your message and our team will follow up soon.\n\nYour message:\n{$message}\n\nCalm Canine\n";
 $replyHtml = cc_mail_wrap_html('Message received',
-    '<p style="margin:0 0 16px;line-height:1.6;">Hi ' . cc_mail_escape($name) . ',</p>'
-    . '<p style="margin:0 0 16px;line-height:1.6;">Thanks for contacting Calm Canine. We received your message and our team will follow up soon.</p>'
-    . '<p style="margin:0 0 8px;line-height:1.6;"><strong>Your message:</strong></p>'
-    . '<p style="margin:0;white-space:pre-wrap;line-height:1.6;">' . cc_mail_escape($message) . '</p>'
+    '<p style="margin:0 0 12px;font-size:16px;line-height:1.65;">Hi ' . cc_mail_escape($name) . ',</p>'
+    . '<p style="margin:0;font-size:15px;line-height:1.7;color:#53675d;">Thanks for reaching out. Your message is safely with our team, and we will follow up as soon as we can.</p>'
+    . cc_mail_panel('<p style="margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.1em;color:#718078;text-transform:uppercase;">Your message</p>'
+    . '<p style="margin:0;white-space:pre-wrap;font-size:14px;line-height:1.7;color:#253d32;">' . cc_mail_escape($message) . '</p>')
 );
 $autoReply = cc_mail_send($email, $replySubject, $replyText, $replyHtml, 'info@serum72.com');
 if (!$autoReply['ok']) {

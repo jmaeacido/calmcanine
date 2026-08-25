@@ -4422,6 +4422,12 @@ footer .brand:focus-visible,
   max-width: 1100px;
 }
 
+.admin-order-page .admin-main {
+  width: 100%;
+  max-width: 1380px;
+  padding: 20px clamp(18px, 3vw, 44px) 48px;
+}
+
 .admin-login-panel {
   max-width: 420px;
   display: grid;
@@ -4518,12 +4524,32 @@ footer .brand:focus-visible,
 
 .admin-detail-layout {
   align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  gap: 16px;
 }
 
 .admin-detail-stack {
   display: grid;
-  gap: 16px;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+
+.admin-detail-stack > :nth-child(n + 3) { grid-column: 1 / -1; }
+.admin-order-page .commerce-back { min-height:36px; margin:0 0 10px; }
+.admin-order-page .commerce-head { margin-bottom:18px; }
+.admin-order-page .commerce-head h1 { font-size:clamp(42px,4vw,56px); }
+.admin-order-meta { display:flex; align-items:center; flex-wrap:wrap; gap:10px; color:var(--muted); font-size:15px; }
+.admin-status-pill,.admin-inline-status { display:inline-flex; width:fit-content; align-items:center; border-radius:999px; padding:5px 10px; background:#e8eee9; color:#2f6b4f; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.admin-order-meta .admin-status-pill::before { content:""; width:6px; height:6px; margin-right:6px; border-radius:50%; background:currentColor; }
+.admin-inline-status--paid { background:#e5f1e9; color:#236044; }
+.admin-inline-status--failed { background:#f8e6e3; color:#8a3a3a; }
+.admin-order-page .commerce-panel { border-radius:20px; padding:clamp(18px,2vw,24px); }
+.admin-order-page .commerce-panel h2 { margin:0 0 18px; font-size:clamp(22px,2vw,28px); }
+.admin-order-page .cart-line--readonly { grid-template-columns:minmax(0,1fr) auto; }
+.admin-order-page .cart-line-copy p { margin:0; color:var(--muted); font-size:13px; line-height:1.55; }
+.admin-payment-reference { min-width:0; display:flex; align-items:center; gap:8px; }
+.admin-payment-reference code { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--forest); font:600 12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace; }
+.admin-copy-button { flex:none; border:1px solid rgba(var(--forest-rgb),.16); border-radius:999px; background:#fff; color:var(--forest); padding:5px 9px; font:700 11px var(--font-body); cursor:pointer; }
 
 .admin-dl {
   margin: 0;
@@ -4546,6 +4572,8 @@ footer .brand:focus-visible,
 .admin-dl dd {
   margin: 0;
   font-size: 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .admin-sub-list {
@@ -4568,8 +4596,17 @@ footer .brand:focus-visible,
 }
 
 .admin-email-card {
-  margin-bottom: 16px;
+  border:1px solid rgba(var(--forest-rgb),.11);
+  border-radius:16px;
+  background:var(--cream);
+  padding:0 16px;
 }
+
+.admin-email-card summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 0; cursor:pointer; font-size:13px; font-weight:700; list-style:none; }
+.admin-email-card summary::-webkit-details-marker { display:none; }
+.admin-email-card summary::after { content:"+"; order:3; font-size:18px; color:var(--muted); }
+.admin-email-card[open] summary::after { content:"–"; }
+.admin-email-card[open] { padding-bottom:15px; }
 
 .admin-email-title {
   margin: 0 0 4px;
@@ -4578,14 +4615,21 @@ footer .brand:focus-visible,
 }
 
 .admin-email-status {
-  margin: 0 0 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--forest);
+  margin:0 0 0 auto;
+  border-radius:999px;
+  padding:4px 8px;
+  background:#efe5d1;
+  color:#785c22;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
 }
 
+.admin-email-status[data-status="sent"] { background:#e5f1e9; color:#236044; }
+.admin-email-status[data-status="failed"] { background:#f8e6e3; color:#8a3a3a; }
+
 .admin-email-details {
-  margin: 0 0 12px;
+  margin:0 0 14px;
   display: grid;
   gap: 8px;
 }
@@ -4634,6 +4678,14 @@ footer .brand:focus-visible,
 }
 
 @media (max-width: 900px) {
+  .admin-order-page .admin-main { padding:16px 14px 40px; }
+
+  .admin-detail-layout,
+  .admin-detail-stack,
+  .admin-email-grid { grid-template-columns: 1fr; }
+
+  .admin-detail-stack > :nth-child(n + 3) { grid-column: auto; }
+
   .admin-dl > div {
     grid-template-columns: 1fr;
     gap: 2px;
@@ -4710,6 +4762,20 @@ footer .brand:focus-visible,
   margin-top: 28px;
   font-size: 13px;
   color: var(--muted);
+}
+
+.admin-email-preview-text { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
+.admin-email-error { border-radius:10px; background:#f8e8e5; color:#7a3535; padding:8px 10px; }
+.admin-emails-panel { padding-bottom:24px !important; }
+.admin-email-grid { display:grid; grid-template-columns:1fr; gap:12px; align-items:start; }
+.admin-section-heading { display:flex; align-items:end; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.admin-section-heading h2,.admin-section-heading .eyebrow { margin-bottom:0 !important; }
+.admin-section-heading a { color:var(--green); font-size:12px; font-weight:700; }
+.admin-order-page .admin-aside { top:calc(84px + env(safe-area-inset-top,0px)); border-radius:20px; padding:22px; }
+.admin-order-page [data-save-fulfillment] { margin-top:12px; }
+
+@media (max-width: 900px) {
+  .admin-email-grid { grid-template-columns: 1fr; }
 }
 
 .admin-direction-field { min-width: 150px; }

@@ -341,14 +341,32 @@ function cc_mail_send(string $to, string $subject, string $text, string $html, s
 
 function cc_mail_wrap_html(string $title, string $inner): string {
     $safeTitle = cc_mail_escape($title);
-    return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' . $safeTitle . '</title></head>'
-        . '<body style="margin:0;padding:24px;background:#eee7e7;font-family:Georgia,serif;color:#1f2a24;">'
-        . '<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:20px;padding:28px 24px;">'
-        . '<p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:.12em;font-weight:700;color:#2a3f34;">CALM CANINE</p>'
-        . '<h1 style="margin:0 0 16px;font-size:28px;font-weight:600;">' . $safeTitle . '</h1>'
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . $safeTitle . '</title></head>'
+        . '<body style="margin:0;padding:0;background:#eee7e7;color:#253d32;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">'
+        . '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">A message from Calm Canine.</div>'
+        . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#eee7e7;"><tr><td align="center" style="padding:32px 14px;">'
+        . '<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background:#fff;border:1px solid #ded5d0;border-radius:22px;overflow:hidden;">'
+        . '<tr><td style="padding:24px 30px;background:#29483a;color:#fff;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="font-size:16px;font-weight:800;letter-spacing:.14em;">CALM CANINE</td><td align="right" style="font-size:20px;color:#d8c7a2;">&#x2022; &#x2022; &#x2022;</td></tr></table></td></tr>'
+        . '<tr><td style="padding:32px 30px 28px;"><p style="margin:0 0 9px;font-size:11px;line-height:1.4;font-weight:800;letter-spacing:.14em;color:#76866f;text-transform:uppercase;">Carefully made for calmer days</p>'
+        . '<h1 style="margin:0 0 22px;font-family:Georgia,Times New Roman,serif;font-size:32px;line-height:1.15;font-weight:500;color:#253d32;">' . $safeTitle . '</h1>'
         . $inner
-        . '<p style="margin:24px 0 0;font-size:12px;color:#63735c;">This product is not intended to diagnose, treat, cure, or prevent any disease.</p>'
-        . '</div></body></html>';
+        . '<div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5ded9;"><p style="margin:0 0 6px;font-size:13px;line-height:1.6;color:#53675d;">Questions? Reply to this email and our team will be happy to help.</p>'
+        . '<p style="margin:0;font-size:11px;line-height:1.6;color:#7a887f;">Calm Canine &middot; Thoughtful support for you and your dog<br>This product is not intended to diagnose, treat, cure, or prevent any disease.</p></div>'
+        . '</td></tr></table></td></tr></table></body></html>';
+}
+
+function cc_mail_panel(string $inner): string {
+    return '<div style="margin:18px 0;padding:18px;background:#f7f1ec;border:1px solid #e6dbd2;border-radius:14px;">' . $inner . '</div>';
+}
+
+function cc_mail_totals_html(array $order): string {
+    $shipping = (float)$order['shippingCost'] === 0.0 ? 'Free' : cc_format_money_mail((float)$order['shippingCost']);
+    $rows = [['Subtotal', cc_format_money_mail((float)$order['subtotal'])], ['Shipping', $shipping], ['Tax', cc_format_money_mail((float)$order['tax'])]];
+    $html = '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;font-size:14px;">';
+    foreach ($rows as [$label, $value]) {
+        $html .= '<tr><td style="padding:7px 0;color:#66776d;">' . cc_mail_escape($label) . '</td><td align="right" style="padding:7px 0;font-weight:700;color:#253d32;">' . cc_mail_escape($value) . '</td></tr>';
+    }
+    return $html . '<tr><td style="padding:12px 0 0;border-top:1px solid #dcd2ca;font-size:16px;font-weight:700;">Total</td><td align="right" style="padding:12px 0 0;border-top:1px solid #dcd2ca;font-family:Georgia,serif;font-size:22px;color:#253d32;">' . cc_mail_escape(cc_format_money_mail((float)$order['total'])) . '</td></tr></table>';
 }
 
 function cc_order_items_text(array $order): string {
@@ -387,7 +405,7 @@ function cc_shipping_text(array $order): string {
     return implode("\n", array_values(array_filter($parts, fn($line) => trim($line) !== '' && trim($line) !== ',')));
 }
 
-function cc_build_order_confirmation(array $order): array {
+function cc_legacy_build_order_confirmation(array $order): array {
     $id = (string)$order['id'];
     $name = trim((string)($order['customer']['name'] ?? ''));
     $hello = $name !== '' ? "Hi {$name}," : 'Hi,';
@@ -410,7 +428,7 @@ function cc_build_order_confirmation(array $order): array {
     return compact('subject', 'text', 'html');
 }
 
-function cc_build_ops_new_order(array $order): array {
+function cc_legacy_build_ops_new_order(array $order): array {
     $id = (string)$order['id'];
     $subject = "New Calm Canine order {$id}";
     $customer = (string)($order['customer']['name'] ?? '') . ' <' . (string)($order['customer']['email'] ?? '') . '>';
@@ -428,13 +446,71 @@ function cc_build_ops_new_order(array $order): array {
     return compact('subject', 'text', 'html');
 }
 
-function cc_build_welcome(array $user): array {
+function cc_legacy_build_welcome(array $user): array {
     $name = trim((string)($user['name'] ?? ''));
     $hello = $name !== '' ? "Hi {$name}," : 'Hi,';
     $subject = 'Welcome to Calm Canine';
     $text = $hello . "\n\nYour Calm Canine account is ready. You can sign in anytime to review saved details and orders. Guest checkout is still available whenever you shop.\n\nCalm Canine\n";
     $html = cc_mail_wrap_html('Welcome', '<p style="margin:0 0 16px;line-height:1.6;">' . cc_mail_escape($hello) . '</p>'
         . '<p style="margin:0;line-height:1.6;">Your Calm Canine account is ready. You can sign in anytime to review saved details and orders. Guest checkout is still available whenever you shop.</p>');
+    return compact('subject', 'text', 'html');
+}
+
+function cc_branded_order_items_html(array $order): string {
+    $rows = '';
+    foreach ($order['items'] ?? [] as $item) {
+        $qty = (int)($item['quantity'] ?? 1);
+        $name = cc_mail_escape((string)($item['name'] ?? 'Item'));
+        $type = ($item['purchaseType'] ?? '') === 'subscribe' ? 'subscription' : 'one-time purchase';
+        $total = cc_mail_escape(cc_format_money_mail((float)($item['lineTotal'] ?? 0)));
+        $rows .= '<tr><td style="padding:12px 0;border-bottom:1px solid #e5ded9;font-size:14px;line-height:1.5;"><strong>' . $name . '</strong><br><span style="font-size:12px;color:#718078;">' . $qty . ' &times; ' . cc_mail_escape($type) . '</span></td><td align="right" style="padding:12px 0;border-bottom:1px solid #e5ded9;font-size:14px;font-weight:700;white-space:nowrap;">' . $total . '</td></tr>';
+    }
+    return $rows;
+}
+
+function cc_build_order_confirmation(array $order): array {
+    $id = (string)$order['id'];
+    $name = trim((string)($order['customer']['name'] ?? ''));
+    $hello = $name !== '' ? "Hi {$name}," : 'Hi,';
+    $subject = "Your Calm Canine order {$id}";
+    $text = $hello . "\n\nThank you for your order {$id}. We received your payment and will let you know when it is on the way.\n\n"
+        . cc_order_items_text($order) . "\n\nSubtotal: " . cc_format_money_mail((float)$order['subtotal'])
+        . "\nShipping: " . ((float)$order['shippingCost'] === 0.0 ? 'Free' : cc_format_money_mail((float)$order['shippingCost']))
+        . "\nTax: " . cc_format_money_mail((float)$order['tax']) . "\nTotal: " . cc_format_money_mail((float)$order['total'])
+        . "\n\nShipping to:\n" . cc_shipping_text($order) . "\n\nCalm Canine\n";
+    $html = cc_mail_wrap_html('Order confirmed',
+        '<p style="margin:0 0 10px;font-size:16px;line-height:1.65;">' . cc_mail_escape($hello) . '</p>'
+        . '<p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#53675d;">Thank you for your order. We received your payment and will let you know when it is on the way.</p>'
+        . cc_mail_panel('<p style="margin:0 0 12px;font-size:11px;font-weight:800;letter-spacing:.12em;color:#718078;text-transform:uppercase;">Order ' . cc_mail_escape($id) . '</p><table role="presentation" style="width:100%;border-collapse:collapse;">' . cc_branded_order_items_html($order) . '</table>')
+        . cc_mail_totals_html($order)
+        . cc_mail_panel('<p style="margin:0 0 7px;font-size:12px;font-weight:800;letter-spacing:.08em;color:#718078;text-transform:uppercase;">Shipping to</p><p style="margin:0;font-size:14px;line-height:1.6;">' . nl2br(cc_mail_escape(cc_shipping_text($order))) . '</p>'));
+    return compact('subject', 'text', 'html');
+}
+
+function cc_build_ops_new_order(array $order): array {
+    $id = (string)$order['id'];
+    $customer = trim((string)($order['customer']['name'] ?? '')) . ' <' . (string)($order['customer']['email'] ?? '') . '>';
+    $subject = "New Calm Canine order {$id}";
+    $text = "A new paid order is ready for fulfillment.\n\nOrder: {$id}\nCustomer: {$customer}\nPhone: " . ($order['customer']['phone'] ?? '')
+        . "\nTotal: " . cc_format_money_mail((float)$order['total']) . "\n\n" . cc_order_items_text($order) . "\n\nShip to:\n" . cc_shipping_text($order) . "\n";
+    $html = cc_mail_wrap_html('A new order arrived',
+        '<p style="margin:0 0 18px;font-size:15px;line-height:1.65;color:#53675d;">Order <strong style="color:#253d32;">' . cc_mail_escape($id) . '</strong> is paid and ready for fulfillment.</p>'
+        . cc_mail_panel('<p style="margin:0 0 7px;font-size:12px;font-weight:800;letter-spacing:.08em;color:#718078;text-transform:uppercase;">Customer</p><p style="margin:0;font-size:14px;line-height:1.65;">' . cc_mail_escape($customer) . '<br>' . cc_mail_escape((string)($order['customer']['phone'] ?? '')) . '</p>')
+        . '<table role="presentation" style="width:100%;border-collapse:collapse;">' . cc_branded_order_items_html($order) . '</table>'
+        . cc_mail_totals_html($order)
+        . cc_mail_panel('<p style="margin:0 0 7px;font-size:12px;font-weight:800;letter-spacing:.08em;color:#718078;text-transform:uppercase;">Ship to</p><p style="margin:0;font-size:14px;line-height:1.6;">' . nl2br(cc_mail_escape(cc_shipping_text($order))) . '</p>'));
+    return compact('subject', 'text', 'html');
+}
+
+function cc_build_welcome(array $user): array {
+    $name = trim((string)($user['name'] ?? ''));
+    $hello = $name !== '' ? "Hi {$name}," : 'Hi,';
+    $subject = 'Welcome to Calm Canine';
+    $text = $hello . "\n\nYour Calm Canine account is ready. Sign in anytime to review saved details and orders.\n\nCalm Canine\n";
+    $html = cc_mail_wrap_html('Welcome to Calm Canine',
+        '<p style="margin:0 0 12px;font-size:16px;line-height:1.65;">' . cc_mail_escape($hello) . '</p>'
+        . '<p style="margin:0;font-size:15px;line-height:1.7;color:#53675d;">Your account is ready. Sign in anytime to review your saved details and orders, while still enjoying guest checkout whenever you prefer.</p>'
+        . cc_mail_panel('<p style="margin:0;font-size:14px;line-height:1.65;color:#253d32;"><strong>Everything in one calm place.</strong><br><span style="color:#66776d;">Keep track of purchases and make future checkouts quicker.</span></p>'));
     return compact('subject', 'text', 'html');
 }
 

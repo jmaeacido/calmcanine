@@ -1,5 +1,8 @@
 (()=>{
   const money = (value)=>`$${Number(value || 0).toFixed(2)}`;
+  const escapeHtml = (value)=>String(value ?? "").replace(/[&<>"']/g, (char)=>({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+  })[char]);
   const formatDate = (iso)=>{
     if (!iso) return "—";
     const d = new Date(iso);
@@ -44,6 +47,14 @@
     return "Not queued yet";
   };
 
+  const emailStatusKey = (flags, kind)=>{
+    const part = flags?.[kind] || {};
+    if (part.sent) return "sent";
+    if (part.error) return "failed";
+    if (part.queued) return "queued";
+    return "idle";
+  };
+
   const emailKindLabel = (kind)=> kind === "ops" ? "Internal alert" : "Order confirmation";
 
   const renderEmailDetails = (target, order, kind)=>{
@@ -56,19 +67,19 @@
     }
 
     const to = job.to || (kind === "customer" ? order.customer?.email : "") || "—";
-    rows.push(`<div><dt>To</dt><dd>${to}</dd></div>`);
+    rows.push(`<div><dt>To</dt><dd>${escapeHtml(to)}</dd></div>`);
 
     if (job.subject) {
-      rows.push(`<div><dt>Subject</dt><dd>${job.subject}</dd></div>`);
+      rows.push(`<div><dt>Subject</dt><dd>${escapeHtml(job.subject)}</dd></div>`);
     }
     if (job.preview) {
-      rows.push(`<div><dt>Preview</dt><dd>${job.preview}</dd></div>`);
+      rows.push(`<div><dt>Preview</dt><dd class="admin-email-preview-text">${escapeHtml(job.preview)}</dd></div>`);
     }
     if (kind === "ops" && job.total != null && !job.preview) {
       rows.push(`<div><dt>Order total</dt><dd>${money(job.total)}</dd></div>`);
     }
     if (job.error) {
-      rows.push(`<div><dt>Error</dt><dd>${job.error}</dd></div>`);
+      rows.push(`<div><dt>Error</dt><dd class="admin-email-error">${escapeHtml(job.error)}</dd></div>`);
     }
     if (job.queuedAt) {
       rows.push(`<div><dt>Queued</dt><dd>${formatDate(job.queuedAt)}</dd></div>`);
@@ -88,7 +99,9 @@
 
     document.querySelector("[data-order-id]").textContent = order.id;
     document.querySelector("[data-order-date]").textContent = formatDate(order.createdAt);
-    document.querySelector("[data-order-status]").textContent = order.status || "—";
+    const orderStatus = document.querySelector("[data-order-status]");
+    orderStatus.textContent = order.status || "—";
+    orderStatus.dataset.status = order.status || "unknown";
 
     document.querySelector("[data-customer-name]").textContent = order.customer?.name || "—";
     document.querySelector("[data-customer-email]").textContent = order.customer?.email || "—";
@@ -129,7 +142,9 @@
     const pay = order.payment || {};
     document.querySelector("[data-payment-method]").textContent = `${pay.brand || "Card"} ···· ${pay.last4 || "----"}`;
     document.querySelector("[data-payment-provider]").textContent = pay.provider || "—";
-    document.querySelector("[data-payment-status]").textContent = pay.status || "—";
+    const paymentStatus = document.querySelector("[data-payment-status]");
+    paymentStatus.textContent = pay.status || "—";
+    paymentStatus.className = `admin-inline-status admin-inline-status--${pay.status || "unknown"}`;
     document.querySelector("[data-payment-reference]").textContent = pay.reference || "—";
 
     document.querySelector("[data-summary-subtotal]").textContent = money(order.subtotal);
@@ -139,11 +154,28 @@
 
     document.querySelector("[data-fulfillment-status]").value = order.fulfillment?.status || "pending";
 
-    document.querySelector("[data-email-customer-status]").textContent = emailStatusText(order.email, "customer");
-    document.querySelector("[data-email-ops-status]").textContent = emailStatusText(order.email, "ops");
+    const customerEmailStatus = document.querySelector("[data-email-customer-status]");
+    const opsEmailStatus = document.querySelector("[data-email-ops-status]");
+    customerEmailStatus.textContent = emailStatusText(order.email, "customer");
+    customerEmailStatus.dataset.status = emailStatusKey(order.email, "customer");
+    opsEmailStatus.textContent = emailStatusText(order.email, "ops");
+    opsEmailStatus.dataset.status = emailStatusKey(order.email, "ops");
     renderEmailDetails(document.querySelector("[data-email-customer-details]"), order, "customer");
     renderEmailDetails(document.querySelector("[data-email-ops-details]"), order, "ops");
   };
+
+  document.querySelector("[data-copy-payment]")?.addEventListener("click", async (event)=>{
+    const reference = currentOrder?.payment?.reference;
+    if (!reference) return;
+    try {
+      await navigator.clipboard.writeText(reference);
+      const button = event.currentTarget;
+      button.textContent = "Copied";
+      window.setTimeout(()=>{ button.textContent = "Copy"; }, 1400);
+    } catch {
+      showError("Could not copy the payment reference.");
+    }
+  });
 
   document.querySelector("[data-admin-logout]")?.addEventListener("click", async ()=>{
     try {
