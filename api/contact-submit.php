@@ -56,17 +56,17 @@ cc_email_archive_save([
     'direction' => 'inbound',
     'mailbox' => 'Contact form',
     'from' => $name . ' <' . $email . '>',
-    'to' => 'info@serum72.com',
+    'to' => 'info@nativeceuticals.com',
     'subject' => $subject,
     'date' => gmdate('c'),
     'preview' => mb_substr($message, 0, 500),
     'status' => 'submitted',
 ]);
 
-$result = cc_mail_send('info@serum72.com', $subject, $text, $html, $email);
+$result = cc_mail_send('info@nativeceuticals.com', $subject, $text, $html, $email);
 if (!$result['ok']) {
     error_log('Calm Canine contact email failed: ' . ($result['error'] ?? 'Unknown error'));
-    cc_send_json(502, ['error' => 'We could not send your message right now. Please email info@serum72.com directly.']);
+    cc_send_json(502, ['error' => 'We could not send your message right now. Please email info@nativeceuticals.com directly.']);
 }
 
 $replySubject = 'We received your Calm Canine message';
@@ -77,7 +77,7 @@ $replyHtml = cc_mail_wrap_html('Message received',
     . cc_mail_panel('<p style="margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.1em;color:#718078;text-transform:uppercase;">Your message</p>'
     . '<p style="margin:0;white-space:pre-wrap;font-size:14px;line-height:1.7;color:#253d32;">' . cc_mail_escape($message) . '</p>')
 );
-$autoReply = cc_mail_send($email, $replySubject, $replyText, $replyHtml, 'info@serum72.com');
+$autoReply = cc_mail_send($email, $replySubject, $replyText, $replyHtml, 'info@nativeceuticals.com');
 if (!$autoReply['ok']) {
     error_log('Calm Canine contact auto-reply failed: ' . ($autoReply['error'] ?? 'Unknown error'));
 }
