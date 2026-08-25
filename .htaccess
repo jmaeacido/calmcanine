@@ -17,6 +17,8 @@ RewriteRule ^admin/order/?$ admin/order/index.html [L]
 RewriteRule ^admin/emails/?$ admin/emails/index.html [L]
 
 RewriteRule ^api/quote$ api/quote.php [L]
+RewriteRule ^api/checkout/session$ api/checkout-session.php [L]
+RewriteRule ^api/checkout/complete$ api/checkout-complete.php [L]
 RewriteRule ^api/orders/create$ api/orders-create.php [L]
 RewriteRule ^api/orders/export$ api/orders-export.php [L]
 RewriteRule ^api/account/register$ api/account-register.php [L]

@@ -1,5 +1,6 @@
 const params = new URLSearchParams(window.location.search);
 const orderId = params.get("id");
+const sessionId = params.get("session_id");
 
 const foundEl = document.querySelector("[data-order-found]");
 const missingEl = document.querySelector("[data-order-missing]");
@@ -61,19 +62,27 @@ const renderOrder = (order)=>{
 
   const paymentNote = order.payment?.provider === "stub"
     ? `${order.payment.brand} ending in ${order.payment.last4} (test mode — no charge yet)`
-    : `${order.payment.brand} ending in ${order.payment.last4}`;
+    : order.payment?.last4 && order.payment.last4 !== "••••"
+      ? `${order.payment.brand} ending in ${order.payment.last4}`
+      : "Paid securely with Stripe";
 
   document.querySelector("[data-payment-method]").textContent = paymentNote;
 };
 
 const loadOrder = async ()=>{
-  if(!orderId){
+  if(!orderId && !sessionId){
     showMissing();
     return;
   }
 
   try{
-    const result = await ApiClient.getOrder(orderId);
+    const result = sessionId
+      ? await ApiClient.completeCheckout(sessionId)
+      : await ApiClient.getOrder(orderId);
+    if(sessionId){
+      CartStore.clearCart();
+      window.history.replaceState({}, "", `?id=${encodeURIComponent(result.order.id)}`);
+    }
     renderOrder(result.order);
   }catch{
     showMissing();

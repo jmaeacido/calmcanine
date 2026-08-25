@@ -11,6 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     cc_send_json(405, ['error' => 'Method not allowed']);
 }
 
+if (strtolower((string)(getenv('PAYMENT_PROVIDER') ?: '')) === 'stripe') {
+    cc_send_json(410, ['error' => 'Direct order creation is disabled. Complete payment through Stripe Checkout.']);
+}
+
 $body = cc_read_body();
 $order = cc_create_order($body);
 cc_send_json(201, ['order' => $order]);

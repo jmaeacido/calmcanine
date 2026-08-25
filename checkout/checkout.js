@@ -105,37 +105,6 @@ const refreshQuote = async ()=>{
   }
 };
 
-const digitsOnly = (value)=>value.replace(/\D/g, "");
-
-const formatCardNumber = (value)=>{
-  const digits = digitsOnly(value).slice(0, 16);
-  return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
-};
-
-const formatExpiry = (value)=>{
-  const digits = digitsOnly(value).slice(0, 4);
-  if(digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)} / ${digits.slice(2)}`;
-};
-
-const detectBrand = (number)=>{
-  if(/^4/.test(number)) return "Visa";
-  if(/^5[1-5]/.test(number)) return "Mastercard";
-  if(/^3[47]/.test(number)) return "Amex";
-  if(/^6/.test(number)) return "Discover";
-  return "Card";
-};
-
-const validateExpiry = (value)=>{
-  const match = value.match(/^(\d{2})\s*\/\s*(\d{2})$/);
-  if(!match) return false;
-  const month = Number(match[1]);
-  const year = 2000 + Number(match[2]);
-  if(month < 1 || month > 12) return false;
-  const expiry = new Date(year, month);
-  return expiry > new Date();
-};
-
 const trim = (value)=>String(value ?? "").trim();
 
 const validateForm = (data)=>{
@@ -163,20 +132,6 @@ const validateForm = (data)=>{
   if(!ZIP_RE.test(trim(data.zip))){
     return "Enter a valid ZIP code.";
   }
-  if(!trim(data.cardName)){
-    return "Enter the name on your card.";
-  }
-
-  const cardNumber = digitsOnly(data.cardNumber);
-  if(cardNumber.length < 15){
-    return "Enter a valid card number.";
-  }
-  if(!validateExpiry(data.cardExpiry)){
-    return "Enter a valid expiry date (MM / YY).";
-  }
-  if(digitsOnly(data.cardCvc).length < 3){
-    return "Enter a valid CVC.";
-  }
   if(!data.acceptTerms){
     return "Please accept the terms to place your order.";
   }
@@ -197,18 +152,6 @@ const resetSubmitState = ()=>{
   submitBtn.querySelector(".checkout-submit-label")?.removeAttribute("hidden");
   submitBtn.querySelector(".checkout-submit-loading")?.setAttribute("hidden", "");
 };
-
-form?.querySelector("[data-card-number]")?.addEventListener("input", e=>{
-  e.target.value = formatCardNumber(e.target.value);
-});
-
-form?.querySelector("[data-card-expiry]")?.addEventListener("input", e=>{
-  e.target.value = formatExpiry(e.target.value);
-});
-
-form?.querySelector("[data-card-cvc]")?.addEventListener("input", e=>{
-  e.target.value = digitsOnly(e.target.value).slice(0, 4);
-});
 
 stateSelect?.addEventListener("change", ()=>{
   const restricted = CartStore.RESTRICTED_STATES.includes(stateSelect.value);
@@ -259,8 +202,6 @@ form?.addEventListener("submit", async e=>{
   submitBtn.querySelector(".checkout-submit-label")?.setAttribute("hidden", "");
   submitBtn.querySelector(".checkout-submit-loading")?.removeAttribute("hidden");
 
-  const cardNumber = digitsOnly(payload.cardNumber);
-
   try{
     if(payload.createAccount && !signedInUser){
       await ApiClient.accountRegister({
@@ -279,7 +220,7 @@ form?.addEventListener("submit", async e=>{
       });
     }
 
-    const result = await ApiClient.createOrder({
+    const result = await ApiClient.createCheckoutSession({
       items: CartStore.getItems(),
       acceptTerms: true,
       customer: {
@@ -294,15 +235,9 @@ form?.addEventListener("submit", async e=>{
         city: trim(payload.city),
         state: trim(payload.state),
         zip: trim(payload.zip)
-      },
-      paymentMethod: {
-        brand: detectBrand(cardNumber),
-        last4: cardNumber.slice(-4)
       }
     });
-
-    CartStore.clearCart();
-    window.location.href = `../order?id=${encodeURIComponent(result.order.id)}`;
+    window.location.href = result.url;
   }catch(err){
     formError.textContent = err.message || "Unable to place order.";
     formError.hidden = false;

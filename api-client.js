@@ -37,6 +37,16 @@ const ApiClient = (()=>{
     body: JSON.stringify(payload)
   });
 
+  const createCheckoutSession = (payload)=>request("/checkout/session", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+  const completeCheckout = (sessionId)=>request("/checkout/complete", {
+    method: "POST",
+    body: JSON.stringify({ sessionId })
+  });
+
   const getOrder = (orderId)=>request(`/orders/${encodeURIComponent(orderId)}`);
 
   const accountSession = ()=>request("/account/session");
@@ -77,6 +87,8 @@ const ApiClient = (()=>{
     siteRoot,
     quote,
     createOrder,
+    createCheckoutSession,
+    completeCheckout,
     getOrder,
     accountSession,
     accountRegister,

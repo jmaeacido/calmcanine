@@ -108,25 +108,7 @@
 
         <section class="checkout-section">
           <h2>Payment</h2>
-          <div class="field-grid">
-            <label class="field field-span-2">
-              <span>Name on card</span>
-              <input type="text" name="cardName" autocomplete="cc-name" required />
-            </label>
-            <label class="field field-span-2">
-              <span>Card number</span>
-              <input type="text" name="cardNumber" inputmode="numeric" autocomplete="cc-number" required placeholder="1234 5678 9012 3456" maxlength="19" data-card-number />
-            </label>
-            <label class="field">
-              <span>Expiry</span>
-              <input type="text" name="cardExpiry" autocomplete="cc-exp" required placeholder="MM / YY" maxlength="7" data-card-expiry />
-            </label>
-            <label class="field">
-              <span>CVC</span>
-              <input type="text" name="cardCvc" inputmode="numeric" autocomplete="cc-csc" required placeholder="123" maxlength="4" data-card-cvc />
-            </label>
-          </div>
-          <p class="checkout-secure">Payment runs in test mode until a processor is connected. Only the card brand and last four digits are sent to our server.</p>
+          <p class="checkout-secure">After you review and place the order, you’ll continue to Stripe’s secure checkout to enter payment details. Calm Canine never receives or stores your full card number.</p>
         </section>
 
         <label class="checkout-terms field-checkbox">
@@ -137,7 +119,7 @@
         <p class="field-error" data-form-error hidden></p>
 
         <button type="submit" class="btn btn-primary btn-block checkout-submit" data-place-order>
-          <span class="checkout-submit-label">Place Order</span>
+          <span class="checkout-submit-label">Continue to secure payment</span>
           <span class="checkout-submit-loading" hidden>Processing…</span>
         </button>
       </div>

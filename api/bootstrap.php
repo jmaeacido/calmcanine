@@ -766,7 +766,7 @@ function cc_generate_order_id(): string {
     return 'CC-' . strtoupper(base_convert((string)time(), 10, 36));
 }
 
-function cc_validate_payload(array $payload): string {
+function cc_validate_payload(array $payload, bool $requirePayment = true): string {
     if (empty($payload['items']) || !is_array($payload['items'])) return 'Cart is empty.';
 
     $email = trim($payload['customer']['email'] ?? '');
@@ -789,8 +789,10 @@ function cc_validate_payload(array $payload): string {
         return 'We cannot ship CBD products to your state.';
     }
 
-    $last4 = trim($payload['paymentMethod']['last4'] ?? '');
-    if (!preg_match('/^\d{4}$/', $last4)) return 'Enter a valid card number.';
+    if ($requirePayment) {
+        $last4 = trim($payload['paymentMethod']['last4'] ?? '');
+        if (!preg_match('/^\d{4}$/', $last4)) return 'Enter a valid card number.';
+    }
 
     if (empty($payload['acceptTerms'])) return 'Please accept the terms to place your order.';
 
@@ -879,8 +881,8 @@ function cc_read_body(): array {
     return is_array($decoded) ? $decoded : [];
 }
 
-function cc_create_order(array $payload): array {
-    $error = cc_validate_payload($payload);
+function cc_create_order(array $payload, ?array $verifiedPayment = null): array {
+    $error = cc_validate_payload($payload, $verifiedPayment === null);
     if ($error !== '') {
         cc_send_json(400, ['error' => $error]);
     }
@@ -921,7 +923,7 @@ function cc_create_order(array $payload): array {
         'tax' => $quote['tax'],
         'total' => $quote['total'],
         'subscriptions' => $subscriptions,
-        'payment' => cc_process_payment_stub([], $payload['paymentMethod']),
+        'payment' => $verifiedPayment ?? cc_process_payment_stub([], $payload['paymentMethod']),
         'email' => ['customer' => ['sent' => false, 'queued' => true], 'ops' => ['sent' => false, 'queued' => true]],
         'fulfillment' => ['status' => 'pending'],
     ];
