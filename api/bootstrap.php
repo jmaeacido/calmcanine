@@ -40,6 +40,12 @@ function cc_load_env(): void {
 
 cc_load_env();
 
+function cc_payments_use_stripe(): bool {
+    if (strtolower((string)(getenv('PAYMENT_PROVIDER') ?: '')) === 'stripe') return true;
+    $key = (string)(getenv('STRIPE_SECRET_KEY') ?: '');
+    return $key !== '' && str_starts_with($key, 'sk_');
+}
+
 function cc_session_start(): void {
     if (session_status() === PHP_SESSION_ACTIVE) return;
 
@@ -563,6 +569,7 @@ function cc_admin_order(array $order): array {
         'fulfillment' => [
             'status' => $order['fulfillment']['status'] ?? 'pending',
         ],
+        'renewals' => $order['renewals'] ?? [],
         'emailJobs' => [
             'customer' => cc_get_email_job($order['id'], 'customer'),
             'ops' => cc_get_email_job($order['id'], 'ops'),
@@ -749,6 +756,50 @@ function cc_ensure_dir(string $segment): string {
     return $dir;
 }
 
+function cc_bind_stripe_subscription(string $subscriptionId, string $orderId): void {
+    if ($subscriptionId === '' || $orderId === '') return;
+    $dir = cc_ensure_dir('stripe/subscriptions');
+    file_put_contents(
+        $dir . '/' . preg_replace('/[^A-Za-z0-9_]/', '', $subscriptionId) . '.json',
+        json_encode(['orderId' => $orderId, 'subscriptionId' => $subscriptionId], JSON_UNESCAPED_SLASHES),
+        LOCK_EX
+    );
+}
+
+function cc_order_id_for_subscription(string $subscriptionId): ?string {
+    $path = cc_ensure_dir('stripe/subscriptions') . '/' . preg_replace('/[^A-Za-z0-9_]/', '', $subscriptionId) . '.json';
+    if (!is_file($path)) return null;
+    $data = json_decode((string)file_get_contents($path), true);
+    $id = is_array($data) ? (string)($data['orderId'] ?? '') : '';
+    return $id !== '' ? $id : null;
+}
+
+function cc_stripe_invoice_processed(string $invoiceId): bool {
+    $path = cc_ensure_dir('stripe/invoices') . '/' . preg_replace('/[^A-Za-z0-9_]/', '', $invoiceId) . '.json';
+    return is_file($path);
+}
+
+function cc_mark_stripe_invoice(string $invoiceId, string $orderId, string $kind): void {
+    file_put_contents(
+        cc_ensure_dir('stripe/invoices') . '/' . preg_replace('/[^A-Za-z0-9_]/', '', $invoiceId) . '.json',
+        json_encode(['invoiceId' => $invoiceId, 'orderId' => $orderId, 'kind' => $kind, 'processedAt' => gmdate('c')], JSON_UNESCAPED_SLASHES),
+        LOCK_EX
+    );
+}
+
+function cc_stripe_event_seen(string $eventId): bool {
+    $path = cc_ensure_dir('stripe/events') . '/' . preg_replace('/[^A-Za-z0-9_]/', '', $eventId) . '.json';
+    return is_file($path);
+}
+
+function cc_mark_stripe_event(string $eventId, string $type): void {
+    file_put_contents(
+        cc_ensure_dir('stripe/events') . '/' . preg_replace('/[^A-Za-z0-9_]/', '', $eventId) . '.json',
+        json_encode(['id' => $eventId, 'type' => $type, 'receivedAt' => gmdate('c')], JSON_UNESCAPED_SLASHES),
+        LOCK_EX
+    );
+}
+
 function cc_save_order(array $order): array {
     $path = cc_ensure_dir('orders') . '/' . $order['id'] . '.json';
     file_put_contents($path, json_encode($order, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -820,10 +871,13 @@ function cc_queue_email(array $order, string $suffix = ''): void {
     file_put_contents($dir . '/' . $order['id'] . $suffix . '.json', json_encode($payload, JSON_PRETTY_PRINT));
 }
 
-function cc_enqueue_fulfillment(array $order): void {
+function cc_enqueue_fulfillment(array $order, array $extra = []): void {
+    $items = $extra['items'] ?? $order['items'];
     $entry = [
         'orderId' => $order['id'],
-        'createdAt' => $order['createdAt'],
+        'createdAt' => $extra['createdAt'] ?? $order['createdAt'],
+        'kind' => $extra['kind'] ?? 'initial',
+        'invoiceId' => $extra['invoiceId'] ?? null,
         'status' => 'pending',
         'customer' => [
             'name' => $order['customer']['name'],
@@ -836,9 +890,9 @@ function cc_enqueue_fulfillment(array $order): void {
             'quantity' => $item['quantity'],
             'purchaseType' => $item['purchaseType'],
             'deliveryPlan' => $item['deliveryPlan'] ?? '1_month',
-        ], $order['items']),
+        ], $items),
         'subscriptions' => $order['subscriptions'] ?? [],
-        'totals' => [
+        'totals' => $extra['totals'] ?? [
             'subtotal' => $order['subtotal'],
             'shippingCost' => $order['shippingCost'],
             'tax' => $order['tax'],
@@ -881,22 +935,26 @@ function cc_read_body(): array {
     return is_array($decoded) ? $decoded : [];
 }
 
-function cc_create_order(array $payload, ?array $verifiedPayment = null): array {
+function cc_create_order(array $payload, ?array $verifiedPayment = null, ?array $lockedQuote = null): array {
     $error = cc_validate_payload($payload, $verifiedPayment === null);
     if ($error !== '') {
         cc_send_json(400, ['error' => $error]);
     }
 
-    $quote = cc_build_quote($payload['items'], $payload['shipping']['state'] ?? '');
+    $quote = is_array($lockedQuote) && isset($lockedQuote['items'], $lockedQuote['total'])
+        ? $lockedQuote
+        : cc_build_quote($payload['items'], $payload['shipping']['state'] ?? '');
     $orderId = cc_generate_order_id();
     $account = cc_customer_user();
+    $subscriptionId = $verifiedPayment['subscriptionId'] ?? null;
     $subscriptions = array_values(array_map(fn($item) => [
         'productId' => $item['productId'],
         'sku' => $item['sku'],
         'plan' => $item['deliveryPlan'] ?? '1_month',
         'quantity' => $item['quantity'],
         'unitPrice' => $item['unitPrice'],
-        'status' => 'pending_activation',
+        'status' => $subscriptionId ? 'active' : 'pending_activation',
+        'stripeSubscriptionId' => $subscriptionId,
     ], array_filter($quote['items'], fn($item) => $item['purchaseType'] === 'subscribe')));
 
     $order = [
@@ -923,6 +981,7 @@ function cc_create_order(array $payload, ?array $verifiedPayment = null): array 
         'tax' => $quote['tax'],
         'total' => $quote['total'],
         'subscriptions' => $subscriptions,
+        'renewals' => [],
         'payment' => $verifiedPayment ?? cc_process_payment_stub([], $payload['paymentMethod']),
         'email' => ['customer' => ['sent' => false, 'queued' => true], 'ops' => ['sent' => false, 'queued' => true]],
         'fulfillment' => ['status' => 'pending'],
@@ -930,6 +989,9 @@ function cc_create_order(array $payload, ?array $verifiedPayment = null): array 
 
     cc_enqueue_fulfillment($order);
     cc_save_order($order);
+    if (is_string($subscriptionId) && $subscriptionId !== '') {
+        cc_bind_stripe_subscription($subscriptionId, $orderId);
+    }
     $order = cc_dispatch_order_emails($order);
 
     if ($account !== null) {

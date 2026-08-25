@@ -4241,6 +4241,16 @@ footer .brand:focus-visible,
   color: var(--muted);
 }
 
+.checkout-notice {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #d8c7a2;
+  background: #f7f1ec;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .field-checkbox {
   display: flex;
   align-items: flex-start;

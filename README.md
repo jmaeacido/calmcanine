@@ -66,6 +66,7 @@ Calm Canine combines a static marketing landing page with a lightweight PHP orde
 - **`POST /api/quote`** — normalize line items, compute subtotal, shipping, tax, and total
 - **`POST /api/checkout/session`** — validate and price the cart, then create a Stripe-hosted Checkout Session
 - **`POST /api/checkout/complete`** — verify successful Stripe payment before persisting the order, sending emails, and queuing fulfillment
+- **`POST /api/stripe/webhook`** — signed Stripe events finalize checkout if the shopper never returns, and queue Subscribe & save renewals
 - **`GET /api/orders/{id}`** — return a sanitized order for the confirmation page
 - **`GET /api/orders/export`** — fulfillment queue export (JSON or CSV; optional bearer/key auth via `FULFILLMENT_EXPORT_KEY`)
 - Orders saved under `data/orders/`; email jobs under `data/email-queue/`; fulfillment queue in `data/fulfillment/queue.jsonl`
@@ -150,6 +151,10 @@ calmcanine/
 │   ├── newsletter-status.php
 │   ├── newsletter-subscribe.php
 │   ├── mail.php            # Brevo SMTP sender, mailing archive, and templates
+│   ├── stripe.php
+│   ├── stripe-webhook.php  # POST /api/stripe/webhook
+│   ├── checkout-session.php
+│   ├── checkout-complete.php
 │   ├── orders-create.php   # POST /api/orders/create
 │   ├── orders-get.php      # GET /api/orders/{id}
 │   ├── orders-export.php   # GET /api/orders/export
@@ -167,6 +172,7 @@ calmcanine/
 │   ├── orders/             # One JSON file per order
 │   ├── users/              # Customer accounts (hashed passwords)
 │   ├── newsletter/         # Optional newsletter subscribers
+│   ├── stripe/             # Webhook event, invoice, and subscription indexes
 │   ├── email-queue/        # Queued confirmation / ops emails
 │   └── fulfillment/        # queue.jsonl for export
 ├── scripts/
@@ -232,7 +238,8 @@ Copy `.env.example` to `.env` and set values when connecting live services:
 |----------|---------|
 | `PAYMENT_PROVIDER` | Payment integration (e.g. `stripe`) |
 | `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key for the active environment |
-| `STRIPE_SECRET_KEY` | Stripe secret key |
+| `STRIPE_SECRET_KEY` | Stripe secret key (`sk_test_` in development) |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` (`whsec_`) |
 | `APP_URL` | Public site base URL used for Stripe success and cancellation redirects |
 | `EMAIL_PROVIDER` | Mail transport (`brevo`) |
 | `SMTP_HOST` | SMTP host (default `smtp-relay.brevo.com`) |
@@ -246,7 +253,7 @@ Copy `.env.example` to `.env` and set values when connecting live services:
 | `FULFILLMENT_EXPORT_KEY` | Protects `/api/orders/export` (Bearer token or `?key=`) |
 | `ADMIN_PASSWORD` | Password for `/admin` session login (required for admin access) |
 
-Payment uses Stripe Checkout when sandbox credentials are configured. Full card details are entered only on Stripe-hosted pages and never pass through the Calm Canine server. Order confirmations, ops alerts, contact notifications, and welcome emails send through Brevo SMTP. Contact submissions are archived before notification delivery, and failed SMTP attempts remain visible in admin.
+Payment uses Stripe Checkout when sandbox credentials are configured. Full card details are entered only on Stripe-hosted pages and never pass through the Calm Canine server. Product photos on Checkout are uploaded from local catalog files (`assets/calm-canine-pouch-v2.png`) to Stripe’s Files API, so Stripe can display them without a public DNS hostname. Set `APP_URL` to the public site origin (Laragon: `http://calmcanine.test`). After a successful sandbox payment, add a webhook for `checkout.session.completed` and `invoice.paid` pointing at `/api/stripe/webhook` and store the signing secret in `STRIPE_WEBHOOK_SECRET`. Order confirmations, ops alerts, contact notifications, and welcome emails send through Brevo SMTP. Contact submissions are archived before notification delivery, and failed SMTP attempts remain visible in admin.
 
 ### Contact records and Brevo email setup
 
@@ -280,6 +287,7 @@ When ready to go live, deploy the full repo to an Apache/PHP host with `mod_rewr
 | `POST` | `/api/quote` | Body: `{ items, state }` → normalized lines, subtotal, shipping, tax, total |
 | `POST` | `/api/checkout/session` | Validate cart and customer details, then return a Stripe Checkout URL |
 | `POST` | `/api/checkout/complete` | Verify a paid Stripe Checkout Session and finalize the order |
+| `POST` | `/api/stripe/webhook` | `checkout.session.completed` and `invoice.paid` (signature required) |
 | `POST` | `/api/orders/create` | Legacy stub route; disabled whenever `PAYMENT_PROVIDER=stripe` |
 | `GET` | `/api/orders/{id}` | Public order payload for confirmation page |
 | `POST` | `/api/account/register` | Body: `{ email, password, name?, phone?, shipping? }` → session cookie |
@@ -320,7 +328,7 @@ Before publishing or embedding in production:
 
 1. Review all **CBD-related claims**, dosage wording, age restrictions, and veterinary disclaimers for the market where the product will be sold.
 2. Confirm shop, cart, checkout, and API URLs resolve correctly in your deployment environment.
-3. Complete a Stripe sandbox checkout, configure production webhooks after deployment, and replace test credentials only after the production review.
+3. Complete a Stripe sandbox checkout, forward `checkout.session.completed` and `invoice.paid` to `/api/stripe/webhook` with `STRIPE_WEBHOOK_SECRET`, and replace test credentials only after the production review.
 4. Confirm contact submissions are saved and Brevo SMTP sends notifications, acknowledgments, and transactional mail.
 5. Compress large JPG/PNG assets if load time becomes a concern.
 6. Footer and serving-section fine print should be reviewed by legal/compliance as needed.

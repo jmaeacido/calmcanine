@@ -298,6 +298,10 @@ createAccountCheck?.addEventListener("change", ()=>{
 
 fillStates();
 renderSummary();
+if (new URLSearchParams(window.location.search).get("payment") === "cancelled") {
+  const notice = document.querySelector("[data-payment-cancelled]");
+  if (notice) notice.hidden = false;
+}
 window.addEventListener("cart:updated", ()=>{
   refreshQuote();
 });

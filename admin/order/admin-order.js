@@ -133,10 +133,23 @@
     if (subs.length) {
       subsPanel.hidden = false;
       document.querySelector("[data-subscriptions]").innerHTML = subs.map((sub)=>`
-        <li>${sub.sku || sub.productId} · plan ${sub.plan} · qty ${sub.quantity} · ${money(sub.unitPrice)} · ${sub.status}</li>
+        <li>${sub.sku || sub.productId} · plan ${sub.plan} · qty ${sub.quantity} · ${money(sub.unitPrice)} · ${sub.status}${sub.lastRenewedAt ? ` · renewed ${formatDate(sub.lastRenewedAt)}` : ""}</li>
       `).join("");
     } else {
       subsPanel.hidden = true;
+    }
+
+    const renewals = order.renewals || [];
+    const renewalsPanel = document.querySelector("[data-renewals-panel]");
+    if (renewalsPanel) {
+      if (renewals.length) {
+        renewalsPanel.hidden = false;
+        document.querySelector("[data-renewals]").innerHTML = renewals.map((row)=>`
+          <li>${formatDate(row.paidAt)} · ${money(row.amount)} · ${escapeHtml(row.invoiceId || "")}</li>
+        `).join("");
+      } else {
+        renewalsPanel.hidden = true;
+      }
     }
 
     const pay = order.payment || {};

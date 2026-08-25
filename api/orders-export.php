@@ -35,13 +35,14 @@ if (is_file($file)) {
 if ($format === 'csv') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename=fulfillment-export.csv');
-    $headers = ['orderId','createdAt','status','customerName','customerEmail','shipName','shipAddress1','shipAddress2','shipCity','shipState','shipZip','sku','productName','quantity','purchaseType','deliveryPlan','subtotal','shipping','tax','total'];
+    $headers = ['orderId','createdAt','kind','status','customerName','customerEmail','shipName','shipAddress1','shipAddress2','shipCity','shipState','shipZip','sku','productName','quantity','purchaseType','deliveryPlan','subtotal','shipping','tax','total'];
     echo implode(',', $headers) . PHP_EOL;
     foreach ($orders as $order) {
         foreach ($order['items'] as $item) {
             echo implode(',', [
                 $order['orderId'],
                 $order['createdAt'],
+                $order['kind'] ?? 'initial',
                 $order['status'],
                 '"' . str_replace('"', '""', $order['customer']['name']) . '"',
                 $order['customer']['email'],
