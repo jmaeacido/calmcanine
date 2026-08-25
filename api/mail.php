@@ -31,6 +31,153 @@ function cc_mail_configured(): bool {
         && cc_mail_from() !== '';
 }
 
+function cc_mail_provider(): string {
+    $provider = strtolower(trim(cc_env('EMAIL_PROVIDER', 'brevo')));
+    return $provider !== '' ? $provider : 'brevo';
+}
+
+function cc_email_archive_path(): string {
+    return cc_ensure_dir('email-archive') . '/messages.json';
+}
+
+function cc_email_archive_list(): array {
+    $path = cc_email_archive_path();
+    if (!is_file($path)) return [];
+    $rows = json_decode((string)file_get_contents($path), true);
+    return is_array($rows) ? $rows : [];
+}
+
+function cc_email_archive_save(array $message): void {
+    $path = cc_email_archive_path();
+    $fp = fopen($path, 'c+');
+    if ($fp === false) return;
+    flock($fp, LOCK_EX);
+    $raw = stream_get_contents($fp);
+    $rows = $raw !== false && $raw !== '' ? json_decode($raw, true) : [];
+    if (!is_array($rows)) $rows = [];
+    $id = (string)($message['id'] ?? '');
+    $replaced = false;
+    $messageId = (string)($message['messageId'] ?? '');
+    foreach ($rows as $index => $row) {
+        if (($row['id'] ?? '') === $id || ($messageId !== '' && ($row['messageId'] ?? '') === $messageId)) {
+            $rows[$index] = array_merge($row, $message);
+            $replaced = true;
+            break;
+        }
+    }
+    if (!$replaced) $rows[] = $message;
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+}
+
+function cc_decode_mail_header(string $value): string {
+    if (function_exists('mb_decode_mimeheader')) {
+        return trim(mb_decode_mimeheader($value));
+    }
+    return trim($value);
+}
+
+function cc_imap_command($fp, int &$counter, string $command): string {
+    $tag = 'CC' . str_pad((string)++$counter, 4, '0', STR_PAD_LEFT);
+    fwrite($fp, $tag . ' ' . $command . "\r\n");
+    $response = '';
+    while (($line = fgets($fp, 65536)) !== false) {
+        $response .= $line;
+        if (preg_match('/\{(\d+)\}\r\n$/', $line, $match)) {
+            $remaining = (int)$match[1];
+            while ($remaining > 0 && !feof($fp)) {
+                $chunk = fread($fp, min(65536, $remaining));
+                if ($chunk === false || $chunk === '') break;
+                $response .= $chunk;
+                $remaining -= strlen($chunk);
+            }
+        }
+        if (str_starts_with($line, $tag . ' ')) {
+            if (!str_contains(strtoupper($line), ' OK')) {
+                throw new RuntimeException(trim($line));
+            }
+            return $response;
+        }
+    }
+    throw new RuntimeException('The IMAP server closed the connection.');
+}
+
+function cc_imap_quote(string $value): string {
+    return '"' . addcslashes($value, "\\\"") . '"';
+}
+
+function cc_imap_sync_mailbox($fp, int &$counter, string $mailbox, string $direction): int {
+    cc_imap_command($fp, $counter, 'SELECT ' . cc_imap_quote($mailbox));
+    $search = cc_imap_command($fp, $counter, 'UID SEARCH ALL');
+    preg_match('/^\* SEARCH ?(.*)$/mi', $search, $found);
+    $uids = preg_split('/\s+/', trim($found[1] ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    $count = 0;
+    $existing = array_column(cc_email_archive_list(), null, 'id');
+    foreach ($uids as $uid) {
+        if (!ctype_digit($uid)) continue;
+        $id = 'imap:' . strtolower($mailbox) . ':' . $uid;
+        if (isset($existing[$id])) continue;
+        $raw = cc_imap_command($fp, $counter, 'UID FETCH ' . $uid . ' (UID INTERNALDATE BODY.PEEK[])');
+        if (!preg_match('/\{(\d+)\}\r\n/s', $raw, $literal, PREG_OFFSET_CAPTURE)) continue;
+        $start = $literal[0][1] + strlen($literal[0][0]);
+        $messageRaw = substr($raw, $start, (int)$literal[1][0]);
+        [$headers, $body] = array_pad(preg_split("/\r?\n\r?\n/", $messageRaw, 2), 2, '');
+        $unfolded = preg_replace("/\r?\n[ \t]+/", ' ', $headers) ?? $headers;
+        $get = function (string $name) use ($unfolded): string {
+            return preg_match('/^' . preg_quote($name, '/') . ':\s*(.*)$/mi', $unfolded, $m)
+                ? cc_decode_mail_header(trim($m[1])) : '';
+        };
+        $plain = trim(strip_tags(preg_replace('/--[^\r\n]+.*$/s', '', $body) ?? $body));
+        $plain = preg_replace('/\s+/', ' ', $plain) ?? $plain;
+        cc_email_archive_save([
+            'id' => $id, 'direction' => $direction, 'mailbox' => $mailbox,
+            'from' => $get('From'), 'to' => $get('To'), 'subject' => $get('Subject') ?: '(No subject)',
+            'date' => $get('Date') ?: gmdate('c'), 'preview' => mb_substr($plain, 0, 500),
+            'messageId' => trim($get('Message-ID'), '<>'), 'syncedAt' => gmdate('c'),
+        ]);
+        $existing[$id] = true;
+        $count++;
+    }
+    return $count;
+}
+
+function cc_inbound_mail_configured(): bool {
+    return cc_env('IMAP_USERNAME') !== '' && cc_env('IMAP_PASSWORD') !== '';
+}
+
+function cc_sync_inbound_archive(): array {
+    if (!cc_inbound_mail_configured()) {
+        return ['ok' => false, 'error' => 'Google Workspace inbox credentials are not configured. Set IMAP_USERNAME and IMAP_PASSWORD.', 'synced' => 0];
+    }
+    $host = cc_env('IMAP_HOST', 'imap.gmail.com');
+    $port = (int)cc_env('IMAP_PORT', '993');
+    $fp = @stream_socket_client('ssl://' . $host . ':' . $port, $errno, $errstr, 25);
+    if ($fp === false) return ['ok' => false, 'error' => "Could not connect to IMAP ({$errstr}).", 'synced' => 0];
+    stream_set_timeout($fp, 25);
+    $counter = 0;
+    try {
+        $greeting = fgets($fp, 65536);
+        if ($greeting === false || !str_contains(strtoupper($greeting), ' OK')) throw new RuntimeException('IMAP greeting failed.');
+        cc_imap_command($fp, $counter, 'LOGIN ' . cc_imap_quote(cc_env('IMAP_USERNAME')) . ' ' . cc_imap_quote(cc_env('IMAP_PASSWORD')));
+        $synced = cc_imap_sync_mailbox($fp, $counter, 'INBOX', 'inbound');
+        try {
+            $synced += cc_imap_sync_mailbox($fp, $counter, '[Gmail]/Sent Mail', 'outbound');
+        } catch (Throwable $ignored) {
+            // Local SMTP auditing still guarantees that application outbound mail is shown.
+        }
+        cc_imap_command($fp, $counter, 'LOGOUT');
+        fclose($fp);
+        return ['ok' => true, 'synced' => $synced];
+    } catch (Throwable $e) {
+        if (is_resource($fp)) fclose($fp);
+        return ['ok' => false, 'error' => $e->getMessage(), 'synced' => 0];
+    }
+}
+
 function cc_format_money_mail(float $amount): string {
     return '$' . number_format($amount, 2);
 }
@@ -61,17 +208,29 @@ function cc_smtp_cmd($fp, string $command, array $okCodes): string {
 }
 
 function cc_mail_send(string $to, string $subject, string $text, string $html, string $replyTo = ''): array {
+    $archiveId = 'smtp:' . bin2hex(random_bytes(12));
+    $archive = [
+        'id' => $archiveId, 'direction' => 'outbound', 'mailbox' => 'Application',
+        'from' => cc_mail_from(), 'to' => $to, 'subject' => $subject,
+        'date' => gmdate('c'), 'preview' => mb_substr(trim($text), 0, 500), 'status' => 'failed',
+    ];
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        $archive['error'] = 'Invalid recipient address.';
+        cc_email_archive_save($archive);
         return ['ok' => false, 'error' => 'Invalid recipient address.'];
     }
     if (!cc_mail_configured()) {
-        return ['ok' => false, 'error' => 'Gmail SMTP is not configured. Set SMTP_USERNAME, SMTP_PASSWORD, and MAIL_FROM in .env.'];
+        $archive['error'] = 'Outbound SMTP is not configured.';
+        cc_email_archive_save($archive);
+        return ['ok' => false, 'error' => 'Outbound SMTP is not configured. Set SMTP_USERNAME, SMTP_PASSWORD, and MAIL_FROM in .env.'];
     }
     if (!function_exists('openssl_encrypt')) {
-        return ['ok' => false, 'error' => 'PHP OpenSSL is required to send mail through Gmail.'];
+        $archive['error'] = 'PHP OpenSSL is required to send mail through SMTP.';
+        cc_email_archive_save($archive);
+        return ['ok' => false, 'error' => 'PHP OpenSSL is required to send mail through SMTP.'];
     }
 
-    $host = cc_env('SMTP_HOST', 'smtp.gmail.com');
+    $host = cc_env('SMTP_HOST', 'smtp-relay.brevo.com');
     $port = (int)cc_env('SMTP_PORT', '587');
     $encryption = strtolower(cc_env('SMTP_ENCRYPTION', 'tls'));
     $username = cc_env('SMTP_USERNAME');
@@ -90,6 +249,8 @@ function cc_mail_send(string $to, string $subject, string $text, string $html, s
         stream_context_create(['ssl' => ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]])
     );
     if ($fp === false) {
+        $archive['error'] = "Could not connect to SMTP ({$errstr}).";
+        cc_email_archive_save($archive);
         return ['ok' => false, 'error' => "Could not connect to SMTP ({$errstr})."];
     }
 
@@ -164,11 +325,16 @@ function cc_mail_send(string $to, string $subject, string $text, string $html, s
 
         fwrite($fp, "QUIT\r\n");
         fclose($fp);
+        $archive['status'] = 'sent';
+        $archive['messageId'] = trim($messageId, '<>');
+        cc_email_archive_save($archive);
         return ['ok' => true];
     } catch (Throwable $e) {
         if (is_resource($fp)) {
             fclose($fp);
         }
+        $archive['error'] = $e->getMessage();
+        cc_email_archive_save($archive);
         return ['ok' => false, 'error' => $e->getMessage()];
     }
 }
@@ -293,7 +459,7 @@ function cc_send_order_email(array $order, string $kind): array {
         'orderId' => $order['id'],
         'subject' => $built['subject'],
         'preview' => substr($built['text'], 0, 240),
-        'provider' => 'gmail-smtp',
+        'provider' => cc_mail_provider() . '-smtp',
         'queuedAt' => $job['queuedAt'] ?? gmdate('c'),
         'sent' => false,
     ]);

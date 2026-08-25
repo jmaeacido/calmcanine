@@ -36,6 +36,7 @@ const AdminApi = (()=>{
     }),
     logout: ()=>request("/admin/logout", { method: "POST" }),
     listOrders: ()=>request("/admin/orders"),
+    listEmails: ()=>request("/admin/emails"),
     getOrder: (orderId)=>request(`/admin/orders/${encodeURIComponent(orderId)}`),
     updateFulfillment: (orderId, status)=>request(`/admin/orders/${encodeURIComponent(orderId)}/fulfillment`, {
       method: "PATCH",

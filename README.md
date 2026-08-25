@@ -64,7 +64,7 @@ Calm Canine combines a static marketing landing page with a lightweight PHP orde
 
 ### Order API
 - **`POST /api/quote`** — normalize line items, compute subtotal, shipping, tax, and total
-- **`POST /api/orders/create`** — validate payload, process payment (stub), persist order, send confirmation and ops emails over Gmail SMTP, queue fulfillment
+- **`POST /api/orders/create`** — validate payload, process payment (stub), persist order, send confirmation and ops emails over Brevo SMTP, queue fulfillment
 - **`GET /api/orders/{id}`** — return a sanitized order for the confirmation page
 - **`GET /api/orders/export`** — fulfillment queue export (JSON or CSV; optional bearer/key auth via `FULFILLMENT_EXPORT_KEY`)
 - Orders saved under `data/orders/`; email jobs under `data/email-queue/`; fulfillment queue in `data/fulfillment/queue.jsonl`
@@ -74,6 +74,7 @@ Calm Canine combines a static marketing landing page with a lightweight PHP orde
 - **`/admin`** — list orders (customer, items, total, fulfillment, email flags); search by ID or email
 - **`/admin/order?id=`** — full order detail; update fulfillment status; mark confirmation/ops emails sent or re-queue
 - Admin APIs under `/api/admin/*` require an authenticated PHP session (`credentials: same-origin`)
+- **`/admin/emails`** — searchable inbound/outbound mailbox; archives contact forms, synchronizes Google Workspace mail, and audits every Brevo SMTP attempt
 
 ### Global
 - Sticky header with mobile nav drawer (Escape / outside-click close)
@@ -147,7 +148,7 @@ calmcanine/
 │   ├── account-orders.php
 │   ├── newsletter-status.php
 │   ├── newsletter-subscribe.php
-│   ├── mail.php            # Gmail SMTP sender and message templates
+│   ├── mail.php            # Brevo SMTP sender, Google IMAP sync, and templates
 │   ├── orders-create.php   # POST /api/orders/create
 │   ├── orders-get.php      # GET /api/orders/{id}
 │   ├── orders-export.php   # GET /api/orders/export
@@ -230,26 +231,29 @@ Copy `.env.example` to `.env` and set values when connecting live services:
 |----------|---------|
 | `PAYMENT_PROVIDER` | Payment integration (e.g. `stripe`) |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
-| `EMAIL_PROVIDER` | Mail transport (`gmail`) |
-| `SMTP_HOST` | SMTP host (default `smtp.gmail.com`) |
+| `EMAIL_PROVIDER` | Mail transport (`brevo`) |
+| `SMTP_HOST` | SMTP host (default `smtp-relay.brevo.com`) |
 | `SMTP_PORT` | SMTP port (default `587`) |
 | `SMTP_ENCRYPTION` | `tls` (STARTTLS on 587) or `ssl` (465) |
-| `SMTP_USERNAME` | Full Gmail address |
-| `SMTP_PASSWORD` | Gmail [App Password](https://support.google.com/accounts/answer/185833) (not the account password) |
-| `MAIL_FROM` | From address (usually the same Gmail address) |
+| `SMTP_USERNAME` | Brevo SMTP login |
+| `SMTP_PASSWORD` | Brevo SMTP key |
+| `MAIL_FROM` | Verified Brevo sender address |
 | `MAIL_FROM_NAME` | From display name |
 | `MAIL_OPS_TO` | Inbox for new-order alerts |
+| `IMAP_HOST` / `IMAP_PORT` | Google Workspace IMAP endpoint (`imap.gmail.com:993`) |
+| `IMAP_USERNAME` | Google Workspace mailbox address |
+| `IMAP_PASSWORD` | Google App Password for mailbox synchronization |
 | `FULFILLMENT_EXPORT_KEY` | Protects `/api/orders/export` (Bearer token or `?key=`) |
 | `ADMIN_PASSWORD` | Password for `/admin` session login (required for admin access) |
 
-Payment is currently a **stub** (`authorized_stub`). Order confirmation, ops alerts, and account welcome emails send through Gmail SMTP when `SMTP_USERNAME` and `SMTP_PASSWORD` are set. If SMTP is missing or a send fails, the order or account is still saved and the job is kept for a retry from admin. The API loads `.env` from the project root via `cc_load_env()` in `bootstrap.php`.
+Payment is currently a **stub** (`authorized_stub`). Order confirmations, ops alerts, contact notifications, and welcome emails send through Brevo SMTP. Contact submissions are archived before notification delivery, and failed SMTP attempts remain visible in admin.
 
-### Gmail SMTP setup
+### Brevo outbound and Google Workspace inbound setup
 
-1. Turn on 2-Step Verification for the Gmail account.
-2. Create an [App Password](https://support.google.com/accounts/answer/185833) for Mail.
-3. Copy `.env.example` to `.env` (or update `.env`) and set `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAIL_FROM`, and `MAIL_OPS_TO`.
-4. Place an order or create an account to send a test. Admin order detail can **Send again** if a message failed.
+1. Verify the sender in Brevo, create an SMTP key, and set `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAIL_FROM`, and `MAIL_OPS_TO`.
+2. Enable 2-Step Verification for the Google Workspace mailbox and create an [App Password](https://support.google.com/accounts/answer/185833).
+3. Set `IMAP_USERNAME` to the mailbox address and `IMAP_PASSWORD` to its App Password.
+4. Submit the contact form and place an order. Both directions should appear under **Admin → Emails**.
 
 ### Admin setup
 
@@ -267,7 +271,7 @@ When ready to go live, deploy the full repo to an Apache/PHP host with `mod_rewr
 
 - PHP 8+ with write access to `data/` (orders, users, email queue, fulfillment)
 - `.htaccess` honored at the document root
-- Optional `.env` for admin password, Gmail SMTP, export key, and future payment providers
+- Optional `.env` for admin password, Brevo SMTP, Google Workspace IMAP, export key, and payment providers
 - No frontend build step — serve the repo root as the document root
 
 ## API Reference
@@ -292,7 +296,7 @@ When ready to go live, deploy the full repo to an Apache/PHP host with `mod_rewr
 | `GET` | `/api/admin/orders/{id}` | Full admin order + email queue jobs |
 | `PATCH` | `/api/admin/orders/{id}/fulfillment` | Body: `{ status }` (`pending` \| `processing` \| `shipped` \| `cancelled`) |
 | `POST` | `/api/admin/orders/{id}/emails/{kind}/mark-sent` | `kind`: `customer` \| `ops` |
-| `POST` | `/api/admin/orders/{id}/emails/{kind}/requeue` | Send confirmation or ops email again via Gmail SMTP |
+| `POST` | `/api/admin/orders/{id}/emails/{kind}/requeue` | Send confirmation or ops email again via Brevo SMTP |
 
 Catalog pricing, shipping rules, and restricted states live in `api/config/catalog.json`. Tax rates are in `api/config/tax-rates.json`.
 
@@ -316,7 +320,7 @@ Before publishing or embedding in production:
 1. Review all **CBD-related claims**, dosage wording, age restrictions, and veterinary disclaimers for the market where the product will be sold.
 2. Confirm shop, cart, checkout, and API URLs resolve correctly in your deployment environment.
 3. Replace the **payment stub** with a PCI-compliant provider before accepting real card data.
-4. Confirm Gmail SMTP credentials send order confirmations and ops alerts.
+4. Confirm Brevo SMTP sends transactional mail and Google Workspace IMAP synchronizes the mailbox.
 5. Compress large JPG/PNG assets if load time becomes a concern.
 6. Footer and serving-section fine print should be reviewed by legal/compliance as needed.
 

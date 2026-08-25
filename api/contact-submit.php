@@ -48,6 +48,19 @@ $html = cc_mail_wrap_html('New contact message',
     . '<p style="margin:0;white-space:pre-wrap;line-height:1.6;">' . cc_mail_escape($message) . '</p>'
 );
 
+// Preserve the submission independently of notification delivery and mailbox sync.
+cc_email_archive_save([
+    'id' => 'contact:' . bin2hex(random_bytes(12)),
+    'direction' => 'inbound',
+    'mailbox' => 'Contact form',
+    'from' => $name . ' <' . $email . '>',
+    'to' => 'info@serum72.com',
+    'subject' => $subject,
+    'date' => gmdate('c'),
+    'preview' => mb_substr($message, 0, 500),
+    'status' => 'submitted',
+]);
+
 $result = cc_mail_send('info@serum72.com', $subject, $text, $html, $email);
 if (!$result['ok']) {
     error_log('Calm Canine contact email failed: ' . ($result['error'] ?? 'Unknown error'));
